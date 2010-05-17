@@ -49,7 +49,7 @@ it does not implement Enumerable, so no other methods are available.
    puts row.to_json
  end
  
- Account.find_by_sql_with_cursor("select ...", :buffer_size=>1000) do |row|
+ Account.find_by_sql_with_cursor("select ...", :buffer_size=>1000).each do |row|
    row.process
  end
 
