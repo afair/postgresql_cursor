@@ -17,7 +17,7 @@ model class. The rationale for this is performance, though an option to return i
 Julian's benchmarks showed returning instances was a factor of 4 slower than return the hash.
 
 ==Installation
- (sudo) gem install postgresql_cursor
+ [sudo] gem install postgresql_cursor
 
 ==Usage
 
@@ -28,15 +28,15 @@ the *find_cursor* method uses cursors to pull in one data block (of x records) a
 return each record as a Hash to a procedural block. When each data block is 
 exhausted, it will fetch the next one.
 
-*find_cursor_by_sql* takes a custom SQL statement and returns each row.
+*find_by_sql_with_cursor* takes a custom SQL statement and returns each row.
 
 ==Example
 
- Account.find_cursor(:account_cursor, true, :all, :conditions=>["status = ?", 'good']) do |row|
+ Account.find_cursor(:conditions=>["status = ?", 'good']).each do |row|
    puts row.to_json
  end
  
- Account.find_cursor_by_sql(:account_cursor, "select ...", *args) do |row|
+ Account.find_by_sql_with_cursor(:account_cursor, "select ...", *args) do |row|
    puts row.to_json
  end
  
