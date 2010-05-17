@@ -35,20 +35,18 @@ class PostgreSQLCursor
   # (required by PostgreSQL), opens the cursor, buffers the results, returns each row, and closes the cursor.
   def each
     @connection.transaction do
-      @result = open_cursor
-      while (row = fetch_cursor) do
+      @result = open 
+      while (row = fetch ) do
         yield row
       end
-      close_cursor
+      close 
       @count
     end
   end
   
   # Starts buffered result set processing for a given SQL statement. The DB
-  def open_cursor
+  def open
     raise "Open Cursor state not ready" unless @state == :ready
-    #@sql = replace_params(*(@sql.flatten)) if @sql.is_a?(Array)
-    #@connection.start_transaction if @connection.outside_transaction?
     @result = @connection.execute("declare #{@name} cursor for #{@sql}")
     @state = :empty
     @buffer_reads = 0
@@ -67,28 +65,26 @@ class PostgreSQLCursor
     @buffer = @result.collect {|row| row }
     @state  = @buffer.size > 0 ? :buffered : :eof
     @buffer_reads += 1
-    #puts self.status
     @buffer
   end
 
   # Returns the next row from the cursor, or nil when end of data.
   # The row returned is a hash[:colname]
-  def fetch_cursor
-    open_cursor  if @state == :ready
+  def fetch
+    open         if @state == :ready
     fetch_buffer if @state == :empty
     return nil   if @state == :eof || @state == :closed
     @state = :empty if @buffer.size <= 1
     @count+= 1
     row = @buffer.shift
-    #row.is_a?(Hash) ? row.symbolize_keys : row
     @instantiator.call(row)
   end
   
-  alias_method :next, :fetch_cursor
+  alias_method :next, :fetch 
   
   # Closes the cursor to clean up resources. Call this method during process of each() to 
   # exit the loop
-  def close_cursor
+  def close 
     pg_result = @connection.execute("close #{@name}")
     @state = :closed
   end

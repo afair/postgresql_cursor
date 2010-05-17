@@ -7,9 +7,10 @@ rows one at a time.
 
 For web pages, an application would not want to process a large amount of data, usually employing a 
 Pagination scheme to present it to the users. Background processes sometimes need to generate a large 
+amount of data, and the ActiveRecord approach to load all data into memory is not the best fit here.
 
 Previous solutions employ pagination to fetch each block, 
-then re-running the query for the next "page". This plugin avoids re-executing
+then re-running the query for the next "page". This gem avoids re-executing
 the query by using the PostgreSQL cursors. 
 
 Like the #find_by_sql method, #find_cursor returns each row as a hash instead of an instantiated 
@@ -32,7 +33,7 @@ exhausted, it will fetch the next one.
 
 *find_by_sql_with_cursor* takes a custom SQL statement and returns each row.
 
-==Example
+==Examples
 
  Account.find_with_cursor(:conditions=>["status = ?", 'good']).each do |row|
    puts row.to_json
@@ -41,7 +42,18 @@ exhausted, it will fetch the next one.
  Account.find_by_sql_with_cursor("select ...", :buffer_size=>1000) do |row|
    row.process
  end
- 
+
+ Account.transaction do 
+   cursor = Account.find_with_cursor(...) { |record| record.symbolize_keys }
+   while record = cursor.next do
+     record.process # => {:column=>value, ...}
+     cursor.close if cursor.count > 1000 # Halts loop after 1000 records
+   end
+ end
+
+ Account.find_with_cursor(...) { |record| record.symbolize_keys }.each do |row|
+   row.process
+ end
 
 ==Authors
 Allen Fair, allen.fair@gmail.com, http://github.com/afair

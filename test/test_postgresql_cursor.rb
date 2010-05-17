@@ -30,4 +30,15 @@ class TestPostgresqlCursor < Test::Unit::TestCase
     assert_equal mycount, count
   end
 
+  def test_loop
+   Model.transaction do 
+     cursor = Model.find_with_cursor() { |record| record.symbolize_keys }
+     while record = cursor.next do
+       assert record[:id].class, Fixnum
+       cursor.close if cursor.count >= 10 
+     end
+     assert_equal cursor.count, 10
+   end
+  end
+
 end
