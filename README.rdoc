@@ -9,29 +9,39 @@ For web pages, an application would not want to process a large amount of data, 
 Pagination scheme to present it to the users. Background processes sometimes need to generate a large 
 amount of data, and the ActiveRecord approach to load all data into memory is not the best fit here.
 
-Previous solutions employ pagination to fetch each block, 
-then re-running the query for the next "page". This gem avoids re-executing
-the query by using the PostgreSQL cursors. 
+Previous solutions employ pagination to fetch each block, then re-running the query for the next "page". 
+This gem avoids re-executing the query by using PostgreSQL's cursor feature.
 
-Like the #find_by_sql method, #find_cursor returns each row as a hash instead of an instantiated 
-model class. The rationale for this is performance, though an option to return instances is available. 
-Julian's benchmarks showed returning instances was a factor of 4 slower than return the hash.
+The ActiveRecord methods for the cursor return instances of the model class by default, however you 
+can pass in a block to override this strategy. For instance, returning Hashes instead of AR instances
+is faster. Julian's benchmarks showed returning instances was a factor of 4 slower than returning a hash.
+
+NOTE: This gem is intended to replace the 'postgresql-cursor' (with hyphen, not underscore) library. 
+I also plan on supporing ActiveRecord 3.x in the near future.
 
 ==Installation
  [sudo] gem install postgresql_cursor
 
-This does not require Rails to work, just ActiveRecord < 3.0.0 and the 'pg' gem.
+This does not require Rails to work, just ActiveRecord < 3.0.0 and the 'pg' gem. Rails 3 support is forthcoming.
+
+You can then configure your Rails application by adding to the config/environment.rb file
+  config.gem 'postgresql_cursor'
+or require the gem on your non-rails application
+  require 'rubygems'
+  require 'postgresql_cursor'
 
 ==Usage
 
-A Rails/ActiveRecord plugin for the PostgreSQL database adapter that will add
-cursors to a find_cursor() method to process very large result sets. 
+This library is intended to be used via ActiveRecord. It provides two methods on ActiveRecord::Base
+like the find() method, that will return cursor objects instead of an array of model instances. 
 
-the *find_cursor* method uses cursors to pull in one data block (of x records) at a time, and 
-return each record as a Hash to a procedural block. When each data block is 
-exhausted, it will fetch the next one.
+Calling each() the returned cursor will yield a record to the block for each row. It handles a transaction
+block, open, buffering, and closing the cursor. In this way, it operates like an Array object. Note that
+it does not implement Enumerable, so no other methods are available.
 
-*find_by_sql_with_cursor* takes a custom SQL statement and returns each row.
+* *find_with_cursor*( <i>find options</i>, :cursor=>{<i>cursor options</i>}, &block) returns a cursor for the data matching the find options. It takes an optional block accepting a column=>value hash which returns the object desired via each or next, instead of an instance of the model.
+
+* *find_by_sql_with_cursor*(<i>select statement</i>, <i>cursor options</i>, &block) takes a custom SQL statement and returns each row as above.
 
 ==Examples
 
