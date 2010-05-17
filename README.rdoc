@@ -19,6 +19,8 @@ Julian's benchmarks showed returning instances was a factor of 4 slower than ret
 ==Installation
  [sudo] gem install postgresql_cursor
 
+This does not require Rails to work, just ActiveRecord < 3.0.0 and the 'pg' gem.
+
 ==Usage
 
 A Rails/ActiveRecord plugin for the PostgreSQL database adapter that will add
@@ -32,12 +34,12 @@ exhausted, it will fetch the next one.
 
 ==Example
 
- Account.find_cursor(:conditions=>["status = ?", 'good']).each do |row|
+ Account.find_with_cursor(:conditions=>["status = ?", 'good']).each do |row|
    puts row.to_json
  end
  
- Account.find_by_sql_with_cursor(:account_cursor, "select ...", *args) do |row|
-   puts row.to_json
+ Account.find_by_sql_with_cursor("select ...", :buffer_size=>1000) do |row|
+   row.process
  end
  
 
