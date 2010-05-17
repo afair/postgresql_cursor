@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
      "Rakefile",
      "VERSION",
      "lib/postgresql_cursor.rb",
+     "postgresql_cursor.gemspec",
      "test/helper.rb",
      "test/test_postgresql_cursor.rb"
   ]
