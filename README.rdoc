@@ -16,8 +16,12 @@ The ActiveRecord methods for the cursor return instances of the model class by d
 can pass in a block to override this strategy. For instance, returning Hashes instead of AR instances
 is faster. Julian's benchmarks showed returning instances was a factor of 4 slower than returning a hash.
 
+ActiveRecord v3 has initial support in this release. It is deprecating using the conditions in the find()
+method in favor of Arel scopes and usage. I added a method to Arel for iterate over the results in a buffered
+way. 
+  Model.scope_methods.each_row { |hash| puts hash.inspect }
+
 NOTE: This gem is intended to replace the 'postgresql-cursor' (with hyphen, not underscore) library. 
-I also plan on supporing ActiveRecord 3.x in the near future.
 
 ==Installation
  [sudo] gem install postgresql_cursor
@@ -45,6 +49,9 @@ it does not implement Enumerable, so no other methods are available.
 
 ==Examples
 
+ # Active Record v3 with Arel scopes. This is the new, preferred method of use
+ Account.active.each_row { |hash| puts hash.inspect }
+
  Account.find_with_cursor(:conditions=>["status = ?", 'good']).each do |row|
    puts row.to_json
  end
@@ -70,8 +77,7 @@ Allen Fair, allen.fair@gmail.com, http://github.com/afair
 
 Thank you to:
 * Iulian Dogariu, http://github.com/iulianu (Fixes)
-* Julian Mehnle, http://www.mehnle.net (Suggestions)
-
+* Julian Mehnle, julian@mehnle.net (Suggestions)
 
 == Note on Patches/Pull Requests
  

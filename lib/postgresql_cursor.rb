@@ -1,4 +1,4 @@
-gem 'activerecord', '<=2.3.5'
+#gem 'activerecord', '<=2.3.5'
 require 'active_record'
 
 # Class to operate a PostgreSQL cursor to buffer a set of rows, and return single rows for processing.
@@ -103,12 +103,16 @@ class ActiveRecord::Base
     def find_with_cursor(*args, &block)
       find_options = args.last.is_a?(Hash) ? args.pop : {}
       options = find_options.delete(:cursor) || {}
-      validate_find_options(find_options)
-      set_readonly_option!(find_options)
-      sql = construct_finder_sql(find_options)
+      #validate_find_options(find_options)
+      #set_readonly_option!(find_options)
+      #sql = construct_finder_sql(find_options)
+      
+      sql = ActiveRecord::SpawnMethods.apply_finder_options(args.first).to_sql
+      puts sql
+
       PostgreSQLCursor.new(sql, options) { |r| block_given? ? yield(r) : instantiate(r) }
     end
-  
+
     # Returns a PostgreSQLCursor instance to access the results of the sql
     # Specify the :cursor=>{...} option to override options for the cursor such has :buffer_size=>n.
     # Pass an optional block that takes a Hash of the record and returns what you want to return.
@@ -118,4 +122,15 @@ class ActiveRecord::Base
     end
 
   end
+end
+
+#Rails 3: add method to use PostgreSQL cursors
+class ActiveRecord::Relation
+  @@relation_each_row_seq = 0 
+
+  def each_row(options={}, &block)
+    @@relation_each_row_seq += 1
+    PostgreSQLCursor.new( to_sql, options).each { |r| block_given? ? yield(r) : instantiate(r) }
+  end 
+
 end
