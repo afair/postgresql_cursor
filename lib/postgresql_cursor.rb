@@ -1,4 +1,3 @@
-#gem 'activerecord', '<=2.3.5'
 require 'active_record'
 
 # Class to operate a PostgreSQL cursor to buffer a set of rows, and return single rows for processing.
