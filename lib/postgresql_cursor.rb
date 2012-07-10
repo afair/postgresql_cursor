@@ -107,7 +107,6 @@ class ActiveRecord::Base
       #sql = construct_finder_sql(find_options)
       
       sql = ActiveRecord::SpawnMethods.apply_finder_options(args.first).to_sql
-      puts sql
 
       PostgreSQLCursor.new(sql, options) { |r| block_given? ? yield(r) : instantiate(r) }
     end
@@ -130,6 +129,13 @@ class ActiveRecord::Relation
   def each_row(options={}, &block)
     @@relation_each_row_seq += 1
     PostgreSQLCursor.new( to_sql, options).each { |r| block_given? ? yield(r) : instantiate(r) }
+  end 
+
+  def each_instance(options={}, &block)
+    each_row do |r|
+      i = instantiate(r)
+      yield(i) if block_given?
+    end
   end 
 
 end
