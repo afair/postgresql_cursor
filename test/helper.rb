@@ -7,7 +7,8 @@ require 'postgresql_cursor'
 
 ActiveRecord::Base.establish_connection :database=>'allen_test', :adapter=>'postgresql', :username=>'allen'
 class Model < ActiveRecord::Base
-  set_table_name "records"
+  #set_table_name "records"
+  self.table_name = "records"
 
   # create table records (id serial primary key);
   def self.generate(max=1_000_000)

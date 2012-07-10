@@ -38,9 +38,9 @@ class PostgreSQLCursor
       while (row = fetch ) do
         yield row
       end
-      close 
-      @count
+    close 
     end
+    @count
   end
   
   # Starts buffered result set processing for a given SQL statement. The DB
@@ -93,6 +93,7 @@ end
 class ActiveRecord::Base
   class <<self
   
+    #### DEPRECATED: Doesn't work with ActiveRecord 3.2 anymore :(
     # Returns a PostgreSQLCursor instance to access the results, on which you are able to call
     # each (though the cursor is not Enumerable and no other methods are available).
     # No :all argument is needed, and other find() options can be specified.
@@ -107,8 +108,7 @@ class ActiveRecord::Base
       #sql = construct_finder_sql(find_options)
       
       sql = ActiveRecord::SpawnMethods.apply_finder_options(args.first).to_sql
-
-      PostgreSQLCursor.new(sql, options) { |r| block_given? ? yield(r) : instantiate(r) }
+      PostgreSQLCursor.new(sql, options) { |r| yield(r) }
     end
 
     # Returns a PostgreSQLCursor instance to access the results of the sql
@@ -116,7 +116,7 @@ class ActiveRecord::Base
     # Pass an optional block that takes a Hash of the record and returns what you want to return.
     # For example, return the Hash back to process a Hash instead of a table instance for better speed.
     def find_by_sql_with_cursor(sql, options={})
-      PostgreSQLCursor.new(sql, options) { |r| block_given? ? yield(r) : instantiate(r) }
+      PostgreSQLCursor.new(sql, options) { |r| yield(r) }
     end
 
   end
@@ -126,11 +126,19 @@ end
 class ActiveRecord::Relation
   @@relation_each_row_seq = 0 
 
+  # each_row iterates over your ActiveRecord::Relation, returning each row as a Hash to the block.
+  # A Hash is used to avoid instantiating each record as its ActiveRecord object.
+  # Use each_instance instead if you need those features.
+  # Usage: Model.where(...).each_row { |hash| Model.process!(hash) }
   def each_row(options={}, &block)
     @@relation_each_row_seq += 1
-    PostgreSQLCursor.new( to_sql, options).each { |r| block_given? ? yield(r) : instantiate(r) }
+    PostgreSQLCursor.new( to_sql, options).each { |r| yield(r) }
   end 
 
+  # each_instance iterates over your ActiveRecord::Relation, returning each row as an instantiated 
+  # ActiveRecord object of the same model class. If you do not need the overhead of ActiveRecord
+  # on your returned rows, use the each_row method instead.
+  # Usage: Model.where(...).each_instance { |model| model.process! }
   def each_instance(options={}, &block)
     each_row do |r|
       i = instantiate(r)

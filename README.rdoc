@@ -1,4 +1,61 @@
-= PostgreSQLCursor
+= PostgreSQLCursor for handling large Result Sets
+
+ActiveRecord is designed and optimized for web performance. In a web transaction, only a "page" of
+around 20 rows is returned to the user. When you do this
+
+  Model.find(:all, :conditions=>["id>0"]
+
+The database returns all matching result set rows to ActiveRecord, which instantiates each row with
+the data returned. This function returns an array of all these rows to the caller. 
+
+Asyncronous, Background, or Offline processing may require processing a large amount of data.
+When there is a very large number of rows, this requires a lot more memory to hold the data. Ruby 
+does not return that memory after processing the array, and the causes your process to "bloat". If you
+don't have enough memory, it will cause an exception.
+
+To solve this problem, ActiveRecord gives us two alternative methods that work in "chunks" of your data:
+
+  Model.where("id>0").find_each { |model| model.process! }
+
+  Model.where("id>0").find_in_batches do |batch|
+    batch.each { |model| model.process! }
+  end
+
+Optionally, you can specify a :batch_size option as the size of the "chunk", and defaults to 1000.
+
+There are drawbacks with these methods:
+
+* You cannot specify the order, it will be ordered by the primary key (usually id)
+* The primary key must be numeric
+* The query is rerun for each chunk (1000 rows), starting at the next id sequence.
+* You cannot use overly complex queries as that will be rerun and incur more overhead.
+
+PostgreSQLCursor was developed to take advantage of PostgreSQL's cursors. Cursors allow the program
+to declare a cursor to run a given query returning "chunks" of rows to the application program while
+retaining the position of the full result set in the database. This overcomes all the disadvantages
+of using find_each and find_in_batches.
+
+Also, with PostgreSQL, you have on option to have raw hashes of the row returned instead of the 
+instantiated models. An informal benchmark showed that returning instances is a factor of 4 times
+slower than returning hashes. If you are can work with the data in this form, you will find better
+performance.
+
+With PostgreSQL, you can work with cursors as follows:
+
+  Model.where("id>0").each_row { |hash| Model.process(hash) }
+
+  Model.where("id>0").each_instance { |model| model.process! }
+  Model.where("id>0").each_instance(buffer_size:100000) { |model| model.process! }
+
+  Model.find_by_sql_with_cursor("select * from models").each { |hash| Model.process.each }
+
+In the past, a find_with_cursor method was available that worked like find_all, but has been 
+removed since it no longer works with modern ActiveRecord versions.
+
+
+  
+
+==OLD README .... Editing in progress!
 
 PostgreSQL Cursor is an extension to the ActiveRecord PostgreSQLAdapter for very large result sets.
 It provides a cursor open/fetch/close interface to access data without loading all rows into memory,
@@ -43,7 +100,8 @@ Calling each() the returned cursor will yield a record to the block for each row
 block, open, buffering, and closing the cursor. In this way, it operates like an Array object. Note that
 it does not implement Enumerable, so no other methods are available.
 
-* *find_with_cursor*( <i>find options</i>, :cursor=>{<i>cursor options</i>}, &block) returns a cursor for the data matching the find options. It takes an optional block accepting a column=>value hash which returns the object desired via each or next, instead of an instance of the model.
+
+* (DEPRECATED) *find_with_cursor*( <i>find options</i>, :cursor=>{<i>cursor options</i>}, &block) returns a cursor for the data matching the find options. It takes an optional block accepting a column=>value hash which returns the object desired via each or next, instead of an instance of the model.
 
 * *find_by_sql_with_cursor*(<i>select statement</i>, <i>cursor options</i>, &block) takes a custom SQL statement and returns each row as above.
 
@@ -52,6 +110,9 @@ it does not implement Enumerable, so no other methods are available.
  # Active Record v3 with Arel scopes. This is the new, preferred method of use
  Account.active.each_row { |hash| puts hash.inspect }
 
+ #You can have it return instances of your model instead of you want to work closely with them.
+
+ # (DEPRECATED)
  Account.find_with_cursor(:conditions=>["status = ?", 'good']).each do |row|
    puts row.to_json
  end
