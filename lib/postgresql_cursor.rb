@@ -1,149 +1,176 @@
-require 'active_record'
-
-# Class to operate a PostgreSQL cursor to buffer a set of rows, and return single rows for processing.
-# Use this class when processing a very large number of records, which would otherwise all be instantiated
-# in memory by find(). This also adds helpers to ActiveRecord::Base for *find_with_cursor()* and 
-# *find_by_sql_with_cursor()* to return instances of the cursor ready to fetch. 
+# PostgreSQLCursor: library class provides postgresql cursor for large result
+# set processing. Requires ActiveRecord, but can be adapted to other DBI/ORM libraries.
+# If you don't use AR, this assumes #connection and #instantiate methods are available.
 #
-# Use each() with a block to accept an instance of the Model (or whatever you define with a block on 
-# initialize()). It will open, buffer, yield each row, then close the cursor.
+# options     - Hash to control operation and loop breaks
+#   connection: instance  - ActiveRecord connection to use
+#   fraction: 0.1..1.0    - The cursor_tuple_fraction (default 1.0)
+#   block_size: 1..n      - The number of rows to fetch per db block fetch
+#   while: value          - Exits loop when block does not return this value.
+#   until: value          - Exits loop when block returns this value.
 #
-# PostgreSQL requires that a cursor is executed within a transaction block, which you must provide unless
-# you use each() to run through the result set.
+# Exmaples: 
+#   PostgreSQLCursor.new("select ...").each { |hash| ... }
+#   ActiveRecordModel.where(...).each_row { |hash| ... }
+#   ActiveRecordModel.each_row_by_sql("select ...") { |hash| ... }
+#   ActiveRecordModel.each_instance_by_sql("select ...") { |model| ... }
+#
 class PostgreSQLCursor
-  attr_reader :count, :buffer_reads
-  @@counter=0
-  
-  # Define a new cursor, with a SQL statement, as a string with parameters already replaced, and options for 
-  # the cursor
-  # * :buffer_size=>number of records to buffer, default 10000.
-  # Pass a optional block which takes a Hash of "column"=>"value", and returns an object to be yielded for each row.
-  def initialize(sql,*args, &block)
-    @options = args.last.is_a?(Hash) ? args.pop : {}
-    @@counter += 1
-    @instantiator = block || lambda {|r| r }
-    @sql = sql
-    @name = "pgcursor_#{@@counter}"
-    @connection = ActiveRecord::Base.connection
-    @buffer_size = @options[:buffer_size] || 10_000 
-    @count = 0
-    @state = :ready
+  include Enumerable
+  attr_reader :sql, :options, :connection, :count, :result
+  @@cursor_seq = 0
+
+  # Public: Start a new PostgreSQL cursor query
+  # sql     - The SQL statement with interpolated values
+  # options - hash of processing controls
+  #   while: value    - Exits loop when block does not return this value.
+  #   until: value    - Exits loop when block returns this value.
+  #   fraction: 0.1..1.0    - The cursor_tuple_fraction (default 1.0)
+  #   block_size: 1..n      - The number of rows to fetch per db block fetch
+  #                           Defaults to 1000
+  #
+  # Examples
+  #
+  #   PostgreSQLCursor.new("select ....")
+  #
+  # Returns the cursor object when called with new.
+  def initialize(sql, options={})
+    @sql        = sql
+    @options    = options
+    @connection = @options.fetch(:connection) { ActiveRecord::Base.connection }
+    @count      = 0
   end
-  
-  # Iterates through the rows, yields them to the block. It wraps the processing in a transaction 
-  # (required by PostgreSQL), opens the cursor, buffers the results, returns each row, and closes the cursor.
-  def each
+
+  # Public: Yields each row of the result set to the passed block
+  #
+  #
+  # Yields the row to the block. The row is a hash with symbolized keys.
+  #   {colname: value, ....}
+  #
+  # Returns the count of rows processed
+  def each(&block)
+    has_do_until = @options.has_key?(:until)
+    has_do_while = @options.has_key?(:while)
+    @count      = 0
     @connection.transaction do
-      @result = open 
-      while (row = fetch ) do
-        yield row
+      begin
+        open
+        while (row = fetch) do
+          break if row.size==0
+          @count += 1
+          row = row.symbolize_keys
+          rc = yield row
+          # TODO: Handle exceptions raised within block
+          break if has_do_until && rc == @options[:until]
+          break if has_do_while && rc != @options[:while]
+        end
+      rescue e
+        close
+        raise e
       end
-    close 
     end
     @count
   end
-  
-  # Starts buffered result set processing for a given SQL statement. The DB
+
+  # Public: Opens (actually, "declares") the cursor. Call this before fetching
   def open
-    raise "Open Cursor state not ready" unless @state == :ready
-    @result = @connection.execute("declare #{@name} cursor for #{@sql}")
-    @state = :empty
-    @buffer_reads = 0
-    @buffer = nil
+    set_cursor_tuple_fraction
+    @cursor = @@cursor_seq += 1
+    @result = @connection.execute("declare cursor_#{@cursor} cursor for #{@sql}")
+    @block = []
   end
 
-  # Returns a string of the current status
-  def status #:nodoc:
-    "row=#{@count} buffer=#{@buffer.size} state=#{@state} buffer_size=#{@buffer_size} reads=#{@buffer_reads}"
-  end
-
-  # Fetches the next block of rows into memory
-  def fetch_buffer #:nodoc:
-    return unless @state == :empty
-    @result = @connection.execute("fetch #{@buffer_size} from #{@name}")
-    @buffer = @result.collect {|row| row }
-    @state  = @buffer.size > 0 ? :buffered : :eof
-    @buffer_reads += 1
-    @buffer
-  end
-
-  # Returns the next row from the cursor, or nil when end of data.
-  # The row returned is a hash[:colname]
+  # Public: Returns the next row from the cursor, or empty hash if end of results
+  #
+  # Returns a row as a hash of {'colname'=>value,...} 
   def fetch
-    open         if @state == :ready
-    fetch_buffer if @state == :empty
-    return nil   if @state == :eof || @state == :closed
-    @state = :empty if @buffer.size <= 1
-    @count+= 1
-    row = @buffer.shift
-    @instantiator.call(row)
+    fetch_block if @block.size==0
+    @block.shift
   end
-  
-  alias_method :next, :fetch 
-  
-  # Closes the cursor to clean up resources. Call this method during process of each() to 
-  # exit the loop
-  def close 
-    pg_result = @connection.execute("close #{@name}")
-    @state = :closed
+
+  # Private: Fetches the next block of rows into @block
+  def fetch_block(block_size=nil)
+    block_size ||= @block_size ||= @options.fetch(:block_size) { 1000 }
+    @result = @connection.execute("fetch #{block_size} from cursor_#{@cursor}")
+    @block = @result.collect {|row| row } # Make our own
   end
-  
+
+  # Public: Closes the cursor
+  def close
+    @connection.execute("close cursor_#{@cursor}")
+  end
+
+  # Private: Sets the PostgreSQL cursor_tuple_fraction value = 1.0 to assume all rows will be fetched
+  # This is a value between 0.1 and 1.0 (PostgreSQL defaults to 0.1, this library defaults to 1.0) 
+  # used to determine the expected fraction (percent) of result rows returned the the caller.
+  # This value determines the access path by the query planner.
+  def set_cursor_tuple_fraction(frac=1.0)
+    @cursor_tuple_fraction ||= @options.fetch(:fraction) { 1.0 }
+    return @cursor_tuple_fraction if frac == @cursor_tuple_fraction
+    @cursor_tuple_fraction = frac
+    @result = @connection.execute("set cursor_tuple_fraction to  #{frac}")
+    frac
+  end
+ 
 end
 
+# Defines extension to ActiveRecord to use this library
 class ActiveRecord::Base
-  class <<self
   
-    #### DEPRECATED: Doesn't work with ActiveRecord 3.2 anymore :(
-    # Returns a PostgreSQLCursor instance to access the results, on which you are able to call
-    # each (though the cursor is not Enumerable and no other methods are available).
-    # No :all argument is needed, and other find() options can be specified.
-    # Specify the :cursor=>{...} option to override options for the cursor such has :buffer_size=>n.
-    # Pass an optional block that takes a Hash of the record and returns what you want to return.
-    # For example, return the Hash back to process a Hash instead of a table instance for better speed.
-    def find_with_cursor(*args, &block)
-      find_options = args.last.is_a?(Hash) ? args.pop : {}
-      options = find_options.delete(:cursor) || {}
-      #validate_find_options(find_options)
-      #set_readonly_option!(find_options)
-      #sql = construct_finder_sql(find_options)
-      
-      sql = ActiveRecord::SpawnMethods.apply_finder_options(args.first).to_sql
-      PostgreSQLCursor.new(sql, options) { |r| yield(r) }
-    end
+  # Public: Returns each row as a hash to the given block
+  #
+  # sql         - Full SQL statement, variables interpolated
+  # options     - Hash to control 
+  #   fraction: 0.1..1.0    - The cursor_tuple_fraction (default 1.0)
+  #   block_size: 1..n      - The number of rows to fetch per db block fetch
+  #   while: value          - Exits loop when block does not return this value.
+  #   until: value          - Exits loop when block returns this value.
+  #
+  # Returns the number of rows yielded to the block
+  def self.each_row_by_sql(sql, options={}, &block)
+    PostgreSQLCursor.new(sql, options).each(&block)
+  end
 
-    # Returns a PostgreSQLCursor instance to access the results of the sql
-    # Specify the :cursor=>{...} option to override options for the cursor such has :buffer_size=>n.
-    # Pass an optional block that takes a Hash of the record and returns what you want to return.
-    # For example, return the Hash back to process a Hash instead of a table instance for better speed.
-    def find_by_sql_with_cursor(sql, options={})
-      PostgreSQLCursor.new(sql, options) { |r| yield(r) }
+  # Public: Returns each row as a model instance to the given block
+  # As this instantiates a model object, it is slower than each_row_by_sql 
+  #
+  # Paramaters: see each_row_by_sql
+  #
+  # Returns the number of rows yielded to the block
+  def self.each_instance_by_sql(sql, options={}, &block)
+    PostgreSQLCursor.new(sql, options).each do |row|
+      model = instantiate(row)
+      yield model
     end
-
   end
 end
 
-#Rails 3: add method to use PostgreSQL cursors
+# Defines extension to ActiveRecord/AREL to use this library
 class ActiveRecord::Relation
-  @@relation_each_row_seq = 0 
-
-  # each_row iterates over your ActiveRecord::Relation, returning each row as a Hash to the block.
-  # A Hash is used to avoid instantiating each record as its ActiveRecord object.
-  # Use each_instance instead if you need those features.
-  # Usage: Model.where(...).each_row { |hash| Model.process!(hash) }
+  
+  # Public: Executes the query, returning each row as a hash
+  # to the given block.
+  #
+  # options     - Hash to control 
+  #   fraction: 0.1..1.0    - The cursor_tuple_fraction (default 1.0)
+  #   block_size: 1..n      - The number of rows to fetch per db block fetch
+  #   while: value          - Exits loop when block does not return this value.
+  #   until: value          - Exits loop when block returns this value.
+  #
+  # Returns the number of rows yielded to the block
   def each_row(options={}, &block)
-    @@relation_each_row_seq += 1
-    PostgreSQLCursor.new( to_sql, options).each { |r| yield(r) }
-  end 
+    PostgreSQLCursor.new(to_sql).each(&block)
+  end
 
-  # each_instance iterates over your ActiveRecord::Relation, returning each row as an instantiated 
-  # ActiveRecord object of the same model class. If you do not need the overhead of ActiveRecord
-  # on your returned rows, use the each_row method instead.
-  # Usage: Model.where(...).each_instance { |model| model.process! }
+  # Public: Like each_row, but returns an instantiated model object to the block
+  #
+  # Paramaters: same as each_row 
+  #
+  # Returns the number of rows yielded to the block
   def each_instance(options={}, &block)
-    each_row do |r|
-      i = instantiate(r)
-      yield(i) if block_given?
+    PostgreSQLCursor.new(to_sql, options).each do |row|
+      model = instantiate(row)
+      yield model
     end
-  end 
-
+  end
 end
