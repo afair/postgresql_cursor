@@ -1,5 +1,10 @@
 = PostgreSQLCursor for handling large Result Sets
 
+PostgreSQLCursor extends ActiveRecord to allow for efficient processing of queries
+returning a large number of rows.
+
+== Why use this?
+
 ActiveRecord is designed and optimized for web performance. In a web transaction, only a "page" of
 around 20 rows is returned to the user. When you do this
 
@@ -12,6 +17,8 @@ Asyncronous, Background, or Offline processing may require processing a large am
 When there is a very large number of rows, this requires a lot more memory to hold the data. Ruby 
 does not return that memory after processing the array, and the causes your process to "bloat". If you
 don't have enough memory, it will cause an exception.
+
+== Enter find_each
 
 To solve this problem, ActiveRecord gives us two alternative methods that work in "chunks" of your data:
 
@@ -30,6 +37,8 @@ There are drawbacks with these methods:
 * The query is rerun for each chunk (1000 rows), starting at the next id sequence.
 * You cannot use overly complex queries as that will be rerun and incur more overhead.
 
+== PostgreSQLCursor FTW!
+
 PostgreSQLCursor was developed to take advantage of PostgreSQL's cursors. Cursors allow the program
 to declare a cursor to run a given query returning "chunks" of rows to the application program while
 retaining the position of the full result set in the database. This overcomes all the disadvantages
@@ -47,91 +56,20 @@ With PostgreSQL, you can work with cursors as follows:
   Model.where("id>0").each_instance { |model| model.process! }
   Model.where("id>0").each_instance(buffer_size:100000) { |model| model.process! }
 
-  Model.find_by_sql_with_cursor("select * from models").each { |hash| Model.process.each }
+  Model.each_row_by_sql("select * from models") { |hash| Model.process(hash) }
 
-In the past, a find_with_cursor method was available that worked like find_all, but has been 
-removed since it no longer works with modern ActiveRecord versions.
+  Model.each_instance_by_sql("select * from models") { |model| model.process }
 
+All these methods take an options hash to control things more:
 
-  
-
-==OLD README .... Editing in progress!
-
-PostgreSQL Cursor is an extension to the ActiveRecord PostgreSQLAdapter for very large result sets.
-It provides a cursor open/fetch/close interface to access data without loading all rows into memory,
-and instead loads the result rows in "chunks" (default of 10_000 rows), buffers them, and returns the
-rows one at a time.
-
-For web pages, an application would not want to process a large amount of data, usually employing a 
-Pagination scheme to present it to the users. Background processes sometimes need to generate a large 
-amount of data, and the ActiveRecord approach to load all data into memory is not the best fit here.
-
-Previous solutions employ pagination to fetch each block, then re-running the query for the next "page". 
-This gem avoids re-executing the query by using PostgreSQL's cursor feature.
-
-The ActiveRecord methods for the cursor return instances of the model class by default, however you 
-can pass in a block to override this strategy. For instance, returning Hashes instead of AR instances
-is faster. Julian's benchmarks showed returning instances was a factor of 4 slower than returning a hash.
-
-ActiveRecord v3 has initial support in this release. It is deprecating using the conditions in the find()
-method in favor of Arel scopes and usage. I added a method to Arel for iterate over the results in a buffered
-way. 
-  Model.scope_methods.each_row { |hash| puts hash.inspect }
-
-NOTE: This gem is intended to replace the 'postgresql-cursor' (with hyphen, not underscore) library. 
-
-==Installation
- [sudo] gem install postgresql_cursor
-
-This does not require Rails to work, just ActiveRecord < 3.0.0 and the 'pg' gem. Rails 3 support is forthcoming.
-
-You can then configure your Rails application by adding to the config/environment.rb file
-  config.gem 'postgresql_cursor'
-or require the gem on your non-rails application
-  require 'rubygems'
-  require 'postgresql_cursor'
-
-==Usage
-
-This library is intended to be used via ActiveRecord. It provides two methods on ActiveRecord::Base
-like the find() method, that will return cursor objects instead of an array of model instances. 
-
-Calling each() the returned cursor will yield a record to the block for each row. It handles a transaction
-block, open, buffering, and closing the cursor. In this way, it operates like an Array object. Note that
-it does not implement Enumerable, so no other methods are available.
-
-
-* (DEPRECATED) *find_with_cursor*( <i>find options</i>, :cursor=>{<i>cursor options</i>}, &block) returns a cursor for the data matching the find options. It takes an optional block accepting a column=>value hash which returns the object desired via each or next, instead of an instance of the model.
-
-* *find_by_sql_with_cursor*(<i>select statement</i>, <i>cursor options</i>, &block) takes a custom SQL statement and returns each row as above.
-
-==Examples
-
- # Active Record v3 with Arel scopes. This is the new, preferred method of use
- Account.active.each_row { |hash| puts hash.inspect }
-
- #You can have it return instances of your model instead of you want to work closely with them.
-
- # (DEPRECATED)
- Account.find_with_cursor(:conditions=>["status = ?", 'good']).each do |row|
-   puts row.to_json
- end
- 
- Account.find_by_sql_with_cursor("select ...", :buffer_size=>1000).each do |row|
-   row.process
- end
-
- Account.transaction do 
-   cursor = Account.find_with_cursor(...) { |record| record.symbolize_keys }
-   while record = cursor.next do
-     record.process # => {:column=>value, ...}
-     cursor.close if cursor.count > 1000 # Halts loop after 1000 records
-   end
- end
-
- Account.find_with_cursor(...) { |record| record.symbolize_keys }.each do |row|
-   row.process
- end
+  buffer_size:n     The number of rows to fetch from the database each time (default 1000)
+  while:value       Continue looping as long as the block returns this value
+  until:value       Continue looping until the block returns this value
+  connection:conn   Use this connection instead of the current model connection
+  fraction:float    A value to set for the cursor_tuple_fraction variable.
+                    PostgreSQL uses 0.1 (optimize for 10% of result set)
+                    This library uses 1.0 (Optimize for 100% of the result set)
+                    Do not override this value unless you understand it.
 
 ==Authors
 Allen Fair, allen.fair@gmail.com, http://github.com/afair
