@@ -41,5 +41,15 @@ class TestPostgresqlCursor < Test::Unit::TestCase
     assert_equal 1000, nn
     assert_equal Model, row.class
   end
+
+  def test_exception
+    begin
+      Model.each_row_by_sql("select * from records") do |r|
+        raise "Oops"
+      end
+    rescue Exception => e
+      assert_equal e.message, 'Oops'
+    end
+  end
   
 end

@@ -64,7 +64,7 @@ class PostgreSQLCursor
           break if has_do_until && rc == @options[:until]
           break if has_do_while && rc != @options[:while]
         end
-      rescue e
+      rescue Exception => e
         close
         raise e
       end
