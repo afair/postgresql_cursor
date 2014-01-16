@@ -116,7 +116,6 @@ end
 
 # Defines extension to ActiveRecord to use this library
 class ActiveRecord::Base
-  
   # Public: Returns each row as a hash to the given block
   #
   # sql         - Full SQL statement, variables interpolated
@@ -128,6 +127,7 @@ class ActiveRecord::Base
   #
   # Returns the number of rows yielded to the block
   def self.each_row_by_sql(sql, options={}, &block)
+    options = {:connection => self.connection}.merge(options)
     PostgreSQLCursor.new(sql, options).each(&block)
   end
 
@@ -138,6 +138,7 @@ class ActiveRecord::Base
   #
   # Returns the number of rows yielded to the block
   def self.each_instance_by_sql(sql, options={}, &block)
+    options = {:connection => self.connection}.merge(options)
     PostgreSQLCursor.new(sql, options).each do |row|
       model = instantiate(row)
       yield model
@@ -159,7 +160,8 @@ class ActiveRecord::Relation
   #
   # Returns the number of rows yielded to the block
   def each_row(options={}, &block)
-    PostgreSQLCursor.new(to_sql).each(&block)
+    options = {:connection => self.connection}.merge(options)
+    PostgreSQLCursor.new(to_sql, options).each(&block)
   end
 
   # Public: Like each_row, but returns an instantiated model object to the block
@@ -168,6 +170,7 @@ class ActiveRecord::Relation
   #
   # Returns the number of rows yielded to the block
   def each_instance(options={}, &block)
+    options = {:connection => self.connection}.merge(options)
     PostgreSQLCursor.new(to_sql, options).each do |row|
       model = instantiate(row)
       yield model
