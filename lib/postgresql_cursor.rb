@@ -1,3 +1,5 @@
+require 'postgresql_cursor/pluck'
+
 # PostgreSQLCursor: library class provides postgresql cursor for large result
 # set processing. Requires ActiveRecord, but can be adapted to other DBI/ORM libraries.
 # If you don't use AR, this assumes #connection and #instantiate methods are available.
@@ -9,7 +11,7 @@
 #   while: value          - Exits loop when block does not return this value.
 #   until: value          - Exits loop when block returns this value.
 #
-# Exmaples: 
+# Exmaples:
 #   PostgreSQLCursor.new("select ...").each { |hash| ... }
 #   ActiveRecordModel.where(...).each_row { |hash| ... }
 #   ActiveRecordModel.each_row_by_sql("select ...") { |hash| ... }
@@ -82,7 +84,7 @@ class PostgreSQLCursor
 
   # Public: Returns the next row from the cursor, or empty hash if end of results
   #
-  # Returns a row as a hash of {'colname'=>value,...} 
+  # Returns a row as a hash of {'colname'=>value,...}
   def fetch
     fetch_block if @block.size==0
     @block.shift
@@ -101,7 +103,7 @@ class PostgreSQLCursor
   end
 
   # Private: Sets the PostgreSQL cursor_tuple_fraction value = 1.0 to assume all rows will be fetched
-  # This is a value between 0.1 and 1.0 (PostgreSQL defaults to 0.1, this library defaults to 1.0) 
+  # This is a value between 0.1 and 1.0 (PostgreSQL defaults to 0.1, this library defaults to 1.0)
   # used to determine the expected fraction (percent) of result rows returned the the caller.
   # This value determines the access path by the query planner.
   def set_cursor_tuple_fraction(frac=1.0)
@@ -111,16 +113,17 @@ class PostgreSQLCursor
     @result = @connection.execute("set cursor_tuple_fraction to  #{frac}")
     frac
   end
- 
+
 end
 
 # Defines extension to ActiveRecord to use this library
 class ActiveRecord::Base
-  
+  extend PostgreSQLCursor::Pluck::ActiveRecord
+
   # Public: Returns each row as a hash to the given block
   #
   # sql         - Full SQL statement, variables interpolated
-  # options     - Hash to control 
+  # options     - Hash to control
   #   fraction: 0.1..1.0    - The cursor_tuple_fraction (default 1.0)
   #   block_size: 1..n      - The number of rows to fetch per db block fetch
   #   while: value          - Exits loop when block does not return this value.
@@ -132,7 +135,7 @@ class ActiveRecord::Base
   end
 
   # Public: Returns each row as a model instance to the given block
-  # As this instantiates a model object, it is slower than each_row_by_sql 
+  # As this instantiates a model object, it is slower than each_row_by_sql
   #
   # Paramaters: see each_row_by_sql
   #
@@ -147,11 +150,12 @@ end
 
 # Defines extension to ActiveRecord/AREL to use this library
 class ActiveRecord::Relation
-  
+  include PostgreSQLCursor::Pluck::ActiveRecordRelation
+
   # Public: Executes the query, returning each row as a hash
   # to the given block.
   #
-  # options     - Hash to control 
+  # options     - Hash to control
   #   fraction: 0.1..1.0    - The cursor_tuple_fraction (default 1.0)
   #   block_size: 1..n      - The number of rows to fetch per db block fetch
   #   while: value          - Exits loop when block does not return this value.
@@ -164,7 +168,7 @@ class ActiveRecord::Relation
 
   # Public: Like each_row, but returns an instantiated model object to the block
   #
-  # Paramaters: same as each_row 
+  # Paramaters: same as each_row
   #
   # Returns the number of rows yielded to the block
   def each_instance(options={}, &block)
