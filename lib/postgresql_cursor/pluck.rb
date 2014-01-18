@@ -55,18 +55,20 @@ class PostgreSQLCursor
         to_join = []
 
         column_names.map! do |column_name|
-          if column_name.is_a?(Symbol) && self.respond_to?(:attribute_alias) && attribute_alias?(column_name)
-            attribute_alias(column_name)
+          if column_name.is_a?(Symbol) && attribute_aliases.has_key?(column_name.to_s)
+            attribute_aliases[column_name.to_s]
           elsif column_name.is_a?(Hash)
             to_join << PostgreSQLCursor::Pluck.joins_hash_from_columns_hash(column_name)
             PostgreSQLCursor::Pluck.columns_array_from_columns_hash(@klass, column_name)
+          elsif column_name.is_a?(Arel::Attributes::Attribute) || column_name.is_a?(Arel::Nodes::As)
+            column_name
           else
             column_name.to_s
           end
         end.flatten!
 
         if has_include?(column_names.first)
-          construct_relation_for_association_calculations.pluck_each(*column_names, &block)
+          construct_relation_for_association_calculations.joins(to_join).pluck_each(*column_names, &block)
         else
           relation = spawn.joins(to_join)
           relation.select_values = column_names.map { |cn|
