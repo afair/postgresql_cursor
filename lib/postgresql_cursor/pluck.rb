@@ -23,7 +23,7 @@ class PostgreSQLCursor
       def columns_array_from_columns_hash(base, columns_hash, columns_array = [])
         case columns_hash
         when Symbol, String
-          column_name = base.attribute_alias(columns_hash) || columns_hash
+          column_name = base.try(:attribute_alias, columns_hash) || columns_hash
           columns_array << base.arel_table[column_name].as("#{base.table_name}__#{column_name}")
         when Array
           columns_hash.each do |col|
@@ -55,7 +55,7 @@ class PostgreSQLCursor
         to_join = []
 
         column_names.map! do |column_name|
-          if column_name.is_a?(Symbol) && attribute_alias?(column_name)
+          if column_name.is_a?(Symbol) && self.respond_to?(:attribute_alias) && attribute_alias?(column_name)
             attribute_alias(column_name)
           elsif column_name.is_a?(Hash)
             to_join << PostgreSQLCursor::Pluck.joins_hash_from_columns_hash(column_name)
