@@ -83,7 +83,7 @@ class PostgreSQLCursor
           cursor = PostgreSQLCursor.new(relation.to_sql)
 
           if Rails::VERSION::MAJOR == 3
-            cursor.each(&block)
+            cursor.each{ |row| block.call(row.values) }
           else
             columns = column_names.map do |key|
               klass.column_types.fetch(key) {
