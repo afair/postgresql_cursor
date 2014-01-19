@@ -23,7 +23,12 @@ class PostgreSQLCursor
       def columns_array_from_columns_hash(base, columns_hash, columns_array = [])
         case columns_hash
         when Symbol, String
-          column_name = base.try(:attribute_alias, columns_hash) || columns_hash
+          column_name = if base.respond_to?(:attribute_aliases)
+            base.attribute_aliases[columns_hash] || columns_hash
+          else
+            columns_hash
+          end
+
           columns_array << base.arel_table[column_name].as("#{base.table_name}__#{column_name}")
         when Array
           columns_hash.each do |col|
@@ -55,7 +60,7 @@ class PostgreSQLCursor
         to_join = []
 
         column_names.map! do |column_name|
-          if column_name.is_a?(Symbol) && attribute_aliases.has_key?(column_name.to_s)
+          if column_name.is_a?(Symbol) && self.respond_to?(:attribute_aliases) && attribute_aliases.has_key?(column_name.to_s)
             attribute_aliases[column_name.to_s]
           elsif column_name.is_a?(Hash)
             to_join << PostgreSQLCursor::Pluck.joins_hash_from_columns_hash(column_name)
@@ -67,33 +72,38 @@ class PostgreSQLCursor
           end
         end.flatten!
 
-        if has_include?(column_names.first)
+        if self.respond_to?(:construct_relation_for_association_calculations) && has_include?(column_names.first)
           construct_relation_for_association_calculations.joins(to_join).pluck_each(*column_names, &block)
         else
-          relation = spawn.joins(to_join)
+          relation = clone.joins(to_join)
           relation.select_values = column_names.map { |cn|
             columns_hash.key?(cn) ? arel_table[cn] : cn
           }
 
-          columns = column_names.map.with_index do |key|
-            klass.column_types.fetch(key) {
-              case key
-              when Arel::Attributes::Attribute
-                key.relation.engine.column_types.fetch(key.name.to_s)
-              when Arel::Nodes::As
-                key.left.relation.engine.column_types.fetch(key.left.name.to_s)
-              else
-                nil
-              end
-            }
-          end
-
           cursor = PostgreSQLCursor.new(relation.to_sql)
-          cursor.each do |row|
-            values = columns.zip(row.values).map do |column, value|
-              column ? column.type_cast(value) : value
+
+          if Rails::VERSION::MAJOR == 3
+            cursor.each(&block)
+          else
+            columns = column_names.map do |key|
+              klass.column_types.fetch(key) {
+                case key
+                when Arel::Attributes::Attribute
+                  key.relation.engine.column_types.fetch(key.name.to_s)
+                when Arel::Nodes::As
+                  key.left.relation.engine.column_types.fetch(key.left.name.to_s)
+                else
+                  nil
+                end
+              }
             end
-            block.call(values)
+
+            cursor.each do |row|
+              values = columns.zip(row.values).map do |column, value|
+                column ? column.type_cast(value) : value
+              end
+              block.call(values)
+            end
           end
         end
       end
