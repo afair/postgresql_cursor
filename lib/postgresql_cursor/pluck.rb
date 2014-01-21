@@ -51,7 +51,11 @@ class PostgreSQLCursor
 
     module ActiveRecord
       def pluck_each(*column_names, &block)
-        self.all.pluck_each(*column_names, &block)
+        if ::ActiveRecord::VERSION::MAJOR == 3
+          self.scoped
+        else
+          self.all
+        end.pluck_each(*column_names, &block)
       end
     end
 
@@ -82,7 +86,7 @@ class PostgreSQLCursor
 
           cursor = PostgreSQLCursor.new(relation.to_sql)
 
-          if Rails::VERSION::MAJOR == 3
+          if ::ActiveRecord::VERSION::MAJOR == 3
             cursor.each{ |row| block.call(row.values) }
           else
             columns = column_names.map do |key|
