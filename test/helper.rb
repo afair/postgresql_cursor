@@ -1,5 +1,5 @@
 require 'rubygems'
-require 'test/unit'
+require 'minitest'
 require 'active_record'
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
@@ -21,5 +21,5 @@ end
 
 Model.generate(1000) if Model.count == 0
 
-class Test::Unit::TestCase
+class MiniTest::Unit::TestCase
 end

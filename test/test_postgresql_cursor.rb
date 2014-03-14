@@ -1,6 +1,8 @@
 require 'helper'
+# database: allen_test
+# create table records ( id serial);
 
-class TestPostgresqlCursor < Test::Unit::TestCase
+class TestPostgresqlCursor < Minitest::Test
 
   def test_each
     c = PostgreSQLCursor.new("select * from records order by 1")
