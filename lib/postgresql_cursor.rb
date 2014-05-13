@@ -160,7 +160,7 @@ class ActiveRecord::Relation
   #
   # Returns the number of rows yielded to the block
   def each_row(options={}, &block)
-    PostgreSQLCursor.new(to_sql).each(&block)
+    PostgreSQLCursor.new(to_sql, options).each(&block)
   end
 
   # Public: Like each_row, but returns an instantiated model object to the block
@@ -171,7 +171,7 @@ class ActiveRecord::Relation
   def each_instance(options={}, &block)
     PostgreSQLCursor.new(to_sql, options).each do |row|
       model = instantiate(row)
-      yield model
+      block.call model
     end
   end
 end

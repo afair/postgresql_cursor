@@ -54,7 +54,7 @@ With PostgreSQL, you can work with cursors as follows:
   Model.where("id>0").each_row { |hash| Model.process(hash) }
 
   Model.where("id>0").each_instance { |model| model.process! }
-  Model.where("id>0").each_instance(buffer_size:100000) { |model| model.process! }
+  Model.where("id>0").each_instance(block_size:100000) { |model| model.process! }
 
   Model.each_row_by_sql("select * from models") { |hash| Model.process(hash) }
 
@@ -62,7 +62,7 @@ With PostgreSQL, you can work with cursors as follows:
 
 All these methods take an options hash to control things more:
 
-  buffer_size:n     The number of rows to fetch from the database each time (default 1000)
+  block_size:n      The number of rows to fetch from the database each time (default 1000)
   while:value       Continue looping as long as the block returns this value
   until:value       Continue looping until the block returns this value
   connection:conn   Use this connection instead of the current model connection
