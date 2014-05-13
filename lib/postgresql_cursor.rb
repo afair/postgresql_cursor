@@ -65,8 +65,9 @@ class PostgreSQLCursor
           break if has_do_while && rc != @options[:while]
         end
       rescue Exception => e
-        close
         raise e
+      ensure
+        close
       end
     end
     @count
@@ -89,7 +90,7 @@ class PostgreSQLCursor
   end
 
   # Private: Fetches the next block of rows into @block
-  def fetch_block(block_size=nil)
+  def  fetch_block(block_size=nil)
     block_size ||= @block_size ||= @options.fetch(:block_size) { 1000 }
     @result = @connection.execute("fetch #{block_size} from cursor_#{@cursor}")
     @block = @result.collect {|row| row } # Make our own
