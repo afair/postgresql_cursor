@@ -11,6 +11,9 @@ begin
     gem.homepage = "http://github.com/afair/postgresql_cursor"
     gem.authors = ["Allen Fair"]
     gem.add_dependency 'activerecord'
+    gem.add_development_dependency 'jeweler'
+    gem.add_development_dependency 'rdoc'
+    gem.add_development_dependency 'minitest'
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
@@ -37,8 +40,6 @@ rescue LoadError
     abort "RCov is not available. In order to run rcov, you must: sudo gem install spicycode-rcov"
   end
 end
-
-task :test => :check_dependencies
 
 task :default => :test
 

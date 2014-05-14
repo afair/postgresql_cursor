@@ -1,6 +1,4 @@
-require 'helper'
-# database: allen_test
-# create table records ( id serial);
+require_relative 'helper'
 
 class TestPostgresqlCursor < Minitest::Test
 
@@ -53,5 +51,5 @@ class TestPostgresqlCursor < Minitest::Test
       assert_equal e.message, 'Oops'
     end
   end
-  
+
 end
