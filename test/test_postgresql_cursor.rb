@@ -53,5 +53,15 @@ class TestPostgresqlCursor < Minitest::Test
       assert_equal e.message, 'Oops'
     end
   end
-  
+
+  def test_pluck_each
+    results = []
+    Model.pluck_each(:id, children: [:id, :body]){ |row| results << row }
+    if ::ActiveRecord::VERSION::MAJOR == 3
+      assert_equal results[4,4], [["3", "5", "Lorem4"], ["3", "6", "Lorem5"], ["4", "7", "Lorem6"], ["4", "8", "Lorem7"]]
+    else
+      assert_equal results[4,4], [[3, 5, "Lorem4"], [3, 6, "Lorem5"], [4, 7, "Lorem6"], [4, 8, "Lorem7"]]
+    end
+  end
+
 end
