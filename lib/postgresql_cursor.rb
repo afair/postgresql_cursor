@@ -1,3 +1,11 @@
+require 'postgresql_cursor/version'
+
+require 'active_record'
+require 'active_record/connection_adapters/postgresql_adapter'
+require 'postgresql_cursor/active_record/connection_adapters/postgresql/database_statements'
+ActiveRecord::Base.extend(PostgreSQLCursor::ActiveRecord::ConnectionAdapters::PostgreSQLAdapter)
+
+################################################################################
 # PostgreSQLCursor: library class provides postgresql cursor for large result
 # set processing. Requires ActiveRecord, but can be adapted to other DBI/ORM libraries.
 # If you don't use AR, this assumes #connection and #instantiate methods are available.
@@ -15,7 +23,8 @@
 #   ActiveRecordModel.each_row_by_sql("select ...") { |hash| ... }
 #   ActiveRecordModel.each_instance_by_sql("select ...") { |model| ... }
 #
-class PostgreSQLCursor
+module PostgreSQLCursor
+class SQLCursor
   include Enumerable
   attr_reader :sql, :options, :connection, :count, :result
   @@cursor_seq = 0
@@ -90,7 +99,7 @@ class PostgreSQLCursor
   end
 
   # Private: Fetches the next block of rows into @block
-  def  fetch_block(block_size=nil)
+  def fetch_block(block_size=nil)
     block_size ||= @block_size ||= @options.fetch(:block_size) { 1000 }
     @result = @connection.execute("fetch #{block_size} from cursor_#{@cursor}")
     @block = @result.collect {|row| row } # Make our own
@@ -115,66 +124,66 @@ class PostgreSQLCursor
  
 end
 
-# Defines extension to ActiveRecord to use this library
-class ActiveRecord::Base
-  # Public: Returns each row as a hash to the given block
-  #
-  # sql         - Full SQL statement, variables interpolated
-  # options     - Hash to control 
-  #   fraction: 0.1..1.0    - The cursor_tuple_fraction (default 1.0)
-  #   block_size: 1..n      - The number of rows to fetch per db block fetch
-  #   while: value          - Exits loop when block does not return this value.
-  #   until: value          - Exits loop when block returns this value.
-  #
-  # Returns the number of rows yielded to the block
-  def self.each_row_by_sql(sql, options={}, &block)
-    options = {:connection => self.connection}.merge(options)
-    PostgreSQLCursor.new(sql, options).each(&block)
-  end
-
-  # Public: Returns each row as a model instance to the given block
-  # As this instantiates a model object, it is slower than each_row_by_sql 
-  #
-  # Paramaters: see each_row_by_sql
-  #
-  # Returns the number of rows yielded to the block
-  def self.each_instance_by_sql(sql, options={}, &block)
-    options = {:connection => self.connection}.merge(options)
-    PostgreSQLCursor.new(sql, options).each do |row|
-      model = instantiate(row)
-      yield model
-    end
-  end
-end
-
-# Defines extension to ActiveRecord/AREL to use this library
-class ActiveRecord::Relation
-  
-  # Public: Executes the query, returning each row as a hash
-  # to the given block.
-  #
-  # options     - Hash to control 
-  #   fraction: 0.1..1.0    - The cursor_tuple_fraction (default 1.0)
-  #   block_size: 1..n      - The number of rows to fetch per db block fetch
-  #   while: value          - Exits loop when block does not return this value.
-  #   until: value          - Exits loop when block returns this value.
-  #
-  # Returns the number of rows yielded to the block
-  def each_row(options={}, &block)
-    options = {:connection => self.connection}.merge(options)
-    PostgreSQLCursor.new(to_sql, options).each(&block)
-  end
-
-  # Public: Like each_row, but returns an instantiated model object to the block
-  #
-  # Paramaters: same as each_row 
-  #
-  # Returns the number of rows yielded to the block
-  def each_instance(options={}, &block)
-    options = {:connection => self.connection}.merge(options)
-    PostgreSQLCursor.new(to_sql, options).each do |row|
-      model = instantiate(row)
-      block.call model
-    end
-  end
+# # Defines extension to ActiveRecord to use this library
+# class ActiveRecord::Base
+#   # Public: Returns each row as a hash to the given block
+#   #
+#   # sql         - Full SQL statement, variables interpolated
+#   # options     - Hash to control 
+#   #   fraction: 0.1..1.0    - The cursor_tuple_fraction (default 1.0)
+#   #   block_size: 1..n      - The number of rows to fetch per db block fetch
+#   #   while: value          - Exits loop when block does not return this value.
+#   #   until: value          - Exits loop when block returns this value.
+#   #
+#   # Returns the number of rows yielded to the block
+#   def self.each_row_by_sql(sql, options={}, &block)
+#     options = {:connection => self.connection}.merge(options)
+#     PostgreSQLCursor.new(sql, options).each(&block)
+#   end
+# 
+#   # Public: Returns each row as a model instance to the given block
+#   # As this instantiates a model object, it is slower than each_row_by_sql 
+#   #
+#   # Paramaters: see each_row_by_sql
+#   #
+#   # Returns the number of rows yielded to the block
+#   def self.each_instance_by_sql(sql, options={}, &block)
+#     options = {:connection => self.connection}.merge(options)
+#     PostgreSQLCursor.new(sql, options).each do |row|
+#       model = instantiate(row)
+#       yield model
+#     end
+#   end
+# end
+# 
+# # Defines extension to ActiveRecord/AREL to use this library
+# class ActiveRecord::Relation
+#   
+#   # Public: Executes the query, returning each row as a hash
+#   # to the given block.
+#   #
+#   # options     - Hash to control 
+#   #   fraction: 0.1..1.0    - The cursor_tuple_fraction (default 1.0)
+#   #   block_size: 1..n      - The number of rows to fetch per db block fetch
+#   #   while: value          - Exits loop when block does not return this value.
+#   #   until: value          - Exits loop when block returns this value.
+#   #
+#   # Returns the number of rows yielded to the block
+#   def each_row(options={}, &block)
+#     options = {:connection => self.connection}.merge(options)
+#     PostgreSQLCursor.new(to_sql, options).each(&block)
+#   end
+# 
+#   # Public: Like each_row, but returns an instantiated model object to the block
+#   #
+#   # Paramaters: same as each_row 
+#   #
+#   # Returns the number of rows yielded to the block
+#   def each_instance(options={}, &block)
+#     options = {:connection => self.connection}.merge(options)
+#     PostgreSQLCursor.new(to_sql, options).each do |row|
+#       model = instantiate(row)
+#       block.call model
+#     end
+#   end
 end
