@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Allen Fair"]
-  s.date = "2013-02-20"
+  s.date = "2014-05-14"
   s.description = "PostgreSQL Cursor is an extension to the ActiveRecord PostgreSQLAdapter for very large result sets. It provides a cursor open/fetch/close interface to access data without loading all rows into memory, and instead loads the result rows in \"chunks\" (default of 10_000 rows), buffers them, and returns the rows one at a time."
   s.email = "allen.fair@gmail.com"
   s.extra_rdoc_files = [
@@ -19,6 +19,8 @@ Gem::Specification.new do |s|
   ]
   s.files = [
     ".document",
+    "Gemfile",
+    "Gemfile.lock",
     "LICENSE",
     "README.rdoc",
     "Rakefile",
@@ -26,6 +28,8 @@ Gem::Specification.new do |s|
     "lib/postgresql_cursor.rb",
     "postgresql_cursor.gemspec",
     "test/helper.rb",
+    "test/model_fixture.rb",
+    "test/prepare_db.rb",
     "test/test_postgresql_cursor.rb"
   ]
   s.homepage = "http://github.com/afair/postgresql_cursor"
@@ -39,16 +43,16 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<postgresql_cursor>, [">= 0"])
       s.add_runtime_dependency(%q<activerecord>, [">= 0"])
-      s.add_runtime_dependency(%q<pg>, [">= 0"])
       s.add_development_dependency(%q<jeweler>, [">= 0"])
+      s.add_development_dependency(%q<pg>, [">= 0"])
       s.add_development_dependency(%q<rdoc>, [">= 0"])
       s.add_development_dependency(%q<minitest>, [">= 0"])
       s.add_development_dependency(%q<minitest-stub-const>, [">= 0"])
     else
       s.add_dependency(%q<postgresql_cursor>, [">= 0"])
       s.add_dependency(%q<activerecord>, [">= 0"])
-      s.add_dependency(%q<pg>, [">= 0"])
       s.add_dependency(%q<jeweler>, [">= 0"])
+      s.add_dependency(%q<pg>, [">= 0"])
       s.add_dependency(%q<rdoc>, [">= 0"])
       s.add_dependency(%q<minitest>, [">= 0"])
       s.add_dependency(%q<minitest-stub-const>, [">= 0"])
@@ -56,8 +60,8 @@ Gem::Specification.new do |s|
   else
     s.add_dependency(%q<postgresql_cursor>, [">= 0"])
     s.add_dependency(%q<activerecord>, [">= 0"])
-    s.add_dependency(%q<pg>, [">= 0"])
     s.add_dependency(%q<jeweler>, [">= 0"])
+    s.add_dependency(%q<pg>, [">= 0"])
     s.add_dependency(%q<rdoc>, [">= 0"])
     s.add_dependency(%q<minitest>, [">= 0"])
     s.add_dependency(%q<minitest-stub-const>, [">= 0"])

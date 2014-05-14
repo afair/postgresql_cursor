@@ -3,7 +3,6 @@ PATH
   specs:
     postgresql_cursor (0.4.2)
       activerecord
-      pg
       postgresql_cursor
 
 GEM
@@ -83,5 +82,6 @@ DEPENDENCIES
   jeweler
   minitest
   minitest-stub-const
+  pg
   postgresql_cursor!
   rdoc
