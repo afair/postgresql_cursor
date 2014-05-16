@@ -18,6 +18,7 @@ module PostgreSQLCursor
           options = {:connection => self.connection}.merge(options)
           PostgreSQLCursor::Cursor.new(to_sql, options).each(&block)
         end
+        alias :each_hash :each_row
 
         # Public: Like each_row, but returns an instantiated model object to the block
         #
@@ -26,9 +27,11 @@ module PostgreSQLCursor
         # Returns the number of rows yielded to the block
         def each_instance(options={}, &block)
           options = {:connection => self.connection}.merge(options)
-          PostgreSQLCursor::Cursor.new(to_sql, options).each do |row|
-            model = instantiate(row)
-            block.call model
+          options[:symbolize_keys] = false # Must be strings to initiate
+          pgresult = nil
+          PostgreSQLCursor::Cursor.new(to_sql, options).each do |row, column_types|
+            model = instantiate(row, column_types)
+            yield model
           end
         end
       end

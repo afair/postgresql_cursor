@@ -51,18 +51,19 @@ module PostgreSQLCursor
     #
     # Returns the count of rows processed
     def each(&block)
-      has_do_until = @options.has_key?(:until)
-      has_do_while = @options.has_key?(:while)
-      @count      = 0
+      has_do_until  = @options.has_key?(:until)
+      has_do_while  = @options.has_key?(:while)
+      @count        = 0
+      @column_types = nil
       @connection.transaction do
         begin
           open
           while (row = fetch) do
             break if row.size==0
             @count += 1
-            row = row.symbolize_keys
-            rc = yield row
-            # TODO: Handle exceptions raised within block
+            row = cast_types(row, column_types) if options[:symbolize_keys]
+            row = row.symbolize_keys if options[:cast]
+            rc = yield(row, column_types)
             break if has_do_until && rc == @options[:until]
             break if has_do_while && rc != @options[:while]
           end
@@ -73,6 +74,28 @@ module PostgreSQLCursor
         end
       end
       @count
+    end
+
+    def cast_types(row)
+      row
+    end
+
+    def column_types
+      return @column_types if @column_types
+
+      types = {}
+      fields = @result.fields
+      fields.each_with_index do |fname, i|
+        ftype = @result.ftype i
+        fmod  = @result.fmod i
+        types[fname] = @connection.get_type_map.fetch(ftype, fmod) { |oid, mod|
+          warn "unknown OID: #{fname}(#{oid}) (#{sql})"
+          OID::Identity.new
+        }   
+
+      end
+
+      @column_types = types
     end
 
     # Public: Opens (actually, "declares") the cursor. Call this before fetching
