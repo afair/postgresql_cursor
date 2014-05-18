@@ -13,10 +13,10 @@ around 20 rows is returned to the user. When you do this
   Model.find(:all, :conditions=>["id>0"]
 
 The database returns all matching result set rows to ActiveRecord, which instantiates each row with
-the data returned. This function returns an array of all these rows to the caller. 
+the data returned. This function returns an array of all these rows to the caller.
 
 Asyncronous, Background, or Offline processing may require processing a large amount of data.
-When there is a very large number of rows, this requires a lot more memory to hold the data. Ruby 
+When there is a very large number of rows, this requires a lot more memory to hold the data. Ruby
 does not return that memory after processing the array, and the causes your process to "bloat". If you
 don't have enough memory, it will cause an exception.
 
@@ -46,7 +46,7 @@ to declare a cursor to run a given query returning "chunks" of rows to the appli
 retaining the position of the full result set in the database. This overcomes all the disadvantages
 of using find_each and find_in_batches.
 
-Also, with PostgreSQL, you have on option to have raw hashes of the row returned instead of the 
+Also, with PostgreSQL, you have on option to have raw hashes of the row returned instead of the
 instantiated models. An informal benchmark showed that returning instances is a factor of 4 times
 slower than returning hashes. If you are can work with the data in this form, you will find better
 performance.
@@ -79,9 +79,10 @@ Allen Fair, allen.fair@gmail.com, http://github.com/afair
 Thank you to:
 * Iulian Dogariu, http://github.com/iulianu (Fixes)
 * Julian Mehnle, julian@mehnle.net (Suggestions)
+* ...And all the other contributers!
 
 == Note on Patches/Pull Requests
- 
+
 * Fork the project.
 * Make your feature addition or bug fix.
 * Add tests for it. This is important so I don't break it in a
@@ -92,4 +93,4 @@ Thank you to:
 
 == Copyright
 
-Copyright (c) 2010 Allen Fair. See LICENSE for details.
+Copyright (c) 2010-2014 Allen Fair. See LICENSE for details.

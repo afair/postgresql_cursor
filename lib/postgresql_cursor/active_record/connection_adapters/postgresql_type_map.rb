@@ -3,7 +3,7 @@ module PostgreSQLCursor
   module ActiveRecord
     module ConnectionAdapters
       module PostgreSQLTypeMap
-        def get_type_map
+        def get_type_map # :nodoc:
           type_map
         end
       end
