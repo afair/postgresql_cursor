@@ -73,10 +73,30 @@ All these methods take an options hash to control things more:
                     This library uses 1.0 (Optimize for 100% of the result set)
                     Do not override this value unless you understand it.
 
-==Authors
-Allen Fair, allen.fair@gmail.com, http://github.com/afair
+Notes:
 
-Thank you to:
+* Use cursors only for large result sets. It has more overhead with the database
+  than ActiveRecord selecting all matching records.
+* Aliases each_hash and each_hash_by_sql are provided ifor each_row and each_row_by_sql
+  if you prefer to express what types are being returned.
+
+== Hashes vs. Instances
+
+The each_row method returns the Hash of strings for speed (as this allows you to process a lot of rows).
+Hashes are returned with String values, and you must take care of any type conversion.
+
+When you use each_instance, ActiveRecord lazily casts these strings into
+Ruby types (Time, Fixnum, etc.) only when you read the attribute.
+
+If you find you need the types cast for your attributes, consider using each_instance
+insead. ActiveRecord's read casting algorithm will only cast the values you need and
+has become more efficient over time.
+
+==Authors
+Allen Fair, @allenfair, http://github.com/afair
+
+Thanks to:
+
 * Iulian Dogariu, http://github.com/iulianu (Fixes)
 * Julian Mehnle, julian@mehnle.net (Suggestions)
 * ...And all the other contributers!
