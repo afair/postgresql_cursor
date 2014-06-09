@@ -81,6 +81,7 @@ module PostgreSQLCursor
     end
 
     def column_types
+      return nil if ::ActiveRecord::VERSION::MAJOR < 4
       return @column_types if @column_types
 
       types = {}

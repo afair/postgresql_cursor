@@ -23,5 +23,5 @@ end
 
 Product.destroy_all
 Product.generate
-Product.where("id>0").each_row { |r| p r["id"] } # Hash
-Product.where("id>0").each_instance { |r| p r.id } # Instance
+Product.where("id>0").each_row(block_size:100) { |r| p r["id"] } # Hash
+Product.where("id>0").each_instance(block_size:100) { |r| p r.id } # Instance

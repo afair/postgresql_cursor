@@ -1,8 +1,9 @@
 # A sample Gemfile
 source "https://rubygems.org"
 
+gem 'activerecord', '~> 3.2.0'
 #gem 'activerecord', '~> 4.0.0'
-gem 'activerecord', '~> 4.1.0'
+#gem 'activerecord', '~> 4.1.0'
 #gem 'activerecord', '4.1.2.rc1'
 
 # For testing against Edge Rails

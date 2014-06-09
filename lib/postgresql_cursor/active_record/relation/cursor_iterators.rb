@@ -35,7 +35,7 @@ module PostgreSQLCursor
           options = {:connection => self.connection}.merge(options)
           options[:symbolize_keys] = false # Must be strings to initiate
           PostgreSQLCursor::Cursor.new(to_sql, options).each do |row, column_types|
-            model = instantiate(row, column_types)
+            model = ::ActiveRecord::VERSION::MAJOR < 4 ?  instantiate(row) : instantiate(row, column_types)
             yield model
           end
         end
