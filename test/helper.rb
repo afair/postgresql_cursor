@@ -20,5 +20,3 @@ end
 
 Product.destroy_all
 Product.generate(1000)
-#class MiniTest::Unit::TestCase
-#end

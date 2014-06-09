@@ -41,6 +41,13 @@ module PostgreSQLCursor
       @options    = options
       @connection = @options.fetch(:connection) { ::ActiveRecord::Base.connection }
       @count      = 0
+      @iterate    = :rows
+    end
+
+    def instance_iterator(type)
+      @iterate = :instances
+      @type    = type
+      self
     end
 
     # Public: Yields each row of the result set to the passed block
@@ -61,9 +68,18 @@ module PostgreSQLCursor
           while (row = fetch) do
             break if row.size==0
             @count += 1
-            row = cast_types(row, column_types) if options[:symbolize_keys]
-            row = row.symbolize_keys if options[:cast]
-            rc = yield(row, column_types)
+            if @iterate == :instances
+              model = if ::ActiveRecord::VERSION::MAJOR < 4 
+                @type.send(:instantiate,row)
+              else
+                @type.send(:instantiate,row, column_types)
+              end
+              rc = yield(model)
+            else
+              row = cast_types(row, column_types) if options[:symbolize_keys]
+              row = row.symbolize_keys if options[:cast]
+              rc = yield(row, column_types)
+            end
             break if has_do_until && rc == @options[:until]
             break if has_do_while && rc != @options[:while]
           end

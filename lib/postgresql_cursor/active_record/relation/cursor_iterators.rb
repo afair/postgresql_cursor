@@ -15,11 +15,16 @@ module PostgreSQLCursor
         #
         # Example:
         #   Post.where(user_id:123).each_row { |hash| Post.process(hash) }
+        #   Post.each_row.map {|r| r["id"].to_i }
         #
         # Returns the number of rows yielded to the block
         def each_row(options={}, &block)
           options = {:connection => self.connection}.merge(options)
-          PostgreSQLCursor::Cursor.new(to_sql, options).each(&block)
+          if block_given?
+            PostgreSQLCursor::Cursor.new(to_sql, options).each(&block)
+          else
+            PostgreSQLCursor::Cursor.new(to_sql, options)
+          end
         end
         alias :each_hash :each_row
 
@@ -29,16 +34,23 @@ module PostgreSQLCursor
         #
         # Example:
         #   Post.where(user_id:123).each_instance { |post| post.process }
+        #   Post.where(user_id:123).each_instance.map { |post| post.process }
         #
         # Returns the number of rows yielded to the block
         def each_instance(options={}, &block)
           options = {:connection => self.connection}.merge(options)
           options[:symbolize_keys] = false # Must be strings to initiate
-          PostgreSQLCursor::Cursor.new(to_sql, options).each do |row, column_types|
-            model = ::ActiveRecord::VERSION::MAJOR < 4 ?  instantiate(row) : instantiate(row, column_types)
-            yield model
+
+          if block_given?
+            PostgreSQLCursor::Cursor.new(to_sql, options).each do |row, column_types|
+              model = ::ActiveRecord::VERSION::MAJOR < 4 ?  instantiate(row) : instantiate(row, column_types)
+              yield model
+            end
+          else
+            PostgreSQLCursor::Cursor.new(to_sql, options).instance_iterator(self)
           end
         end
+
       end
     end
   end
