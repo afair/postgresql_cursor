@@ -44,7 +44,7 @@ also chain in `lazy` when you want to keep the memory footprint small for rest o
 
 ```ruby
 Product.each_row.map {|r| r["id"].to_i } #=> [1, 2, 3, ...]
-Product.each_instance.map { |r| r.id } #=> [1, 2, 3, ...]
+Product.each_instance.map {|r| r.id }.each {|id| p id } #=> [1, 2, 3, ...]
 Product.each_instance.lazy.inject(0) {|sum,r| sum +  r.quantity } #=> 499500
 ```
 
