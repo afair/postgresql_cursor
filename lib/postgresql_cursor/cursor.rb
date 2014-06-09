@@ -11,7 +11,7 @@
 #   until: value          - Exits loop when block returns this value.
 #
 # Exmaples: 
-#   PostgreSQLCursor.new("select ...").each { |hash| ... }
+#   PostgreSQLCursor::Cursor.new("select ...").each { |hash| ... }
 #   ActiveRecordModel.where(...).each_row { |hash| ... }
 #   ActiveRecordModel.each_row_by_sql("select ...") { |hash| ... }
 #   ActiveRecordModel.each_instance_by_sql("select ...") { |model| ... }
@@ -33,13 +33,13 @@ module PostgreSQLCursor
     #
     # Examples
     #
-    #   PostgreSQLCursor.new("select ....")
+    #   PostgreSQLCursor::Cursor.new("select ....")
     #
     # Returns the cursor object when called with new.
     def initialize(sql, options={})
       @sql        = sql
       @options    = options
-      @connection = @options.fetch(:connection) { ActiveRecord::Base.connection }
+      @connection = @options.fetch(:connection) { ::ActiveRecord::Base.connection }
       @count      = 0
     end
 
