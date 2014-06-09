@@ -8,5 +8,5 @@ require 'postgresql_cursor/active_record/connection_adapters/postgresql_type_map
 require 'active_record'
 require 'active_record/connection_adapters/postgresql_adapter'
 ActiveRecord::Base.extend(PostgreSQLCursor::ActiveRecord::SqlCursor)
-ActiveRecord::Relation.include(PostgreSQLCursor::ActiveRecord::Relation::CursorIterators)
-ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.include(PostgreSQLCursor::ActiveRecord::ConnectionAdapters::PostgreSQLTypeMap)
+ActiveRecord::Relation.send(:include, PostgreSQLCursor::ActiveRecord::Relation::CursorIterators)
+ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.send(:include, PostgreSQLCursor::ActiveRecord::ConnectionAdapters::PostgreSQLTypeMap)
