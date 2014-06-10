@@ -59,5 +59,24 @@ class TestPostgresqlCursor < Minitest::Test
       assert_equal e.message, 'Oops'
     end
   end
+
+  def test_cursor
+    cursor = Product.all.each_row
+    assert cursor.respond_to?(:each)
+    r = cursor.map { |row| row["id"] }
+    assert_equal 1000, r.size
+    cursor = Product.each_row_by_sql("select * from products")
+    assert cursor.respond_to?(:each)
+    r = cursor.map { |row| row["id"] }
+    assert_equal 1000, r.size
+  end
+
+  def test_pluck
+    r = Product.pluck_rows(:id)
+    assert_equal 1000, r.size
+    r = Product.all.pluck_instances(:id)
+    assert_equal 1000, r.size
+    assert_equal Fixnum, r.first.class
+  end
   
 end

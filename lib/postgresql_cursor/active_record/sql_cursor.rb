@@ -49,11 +49,9 @@ module PostgreSQLCursor
       # Returns the number of rows yielded to the block
       def each_row_by_sql(sql, options={}, &block)
         options = {:connection => self.connection}.merge(options)
-        if block_given?
-          PostgreSQLCursor::Cursor.new(sql, options).each(&block)
-        else
-          PostgreSQLCursor::Cursor.new(sql, options)
-        end
+        cursor  = PostgreSQLCursor::Cursor.new(sql, options)
+        return cursor.each_row(&block) if block_given?
+        cursor
       end
       alias :each_hash_by_sql :each_row_by_sql
 
@@ -69,27 +67,24 @@ module PostgreSQLCursor
       # Returns the number of rows yielded to the block
       def each_instance_by_sql(sql, options={}, &block)
         options = {:connection => self.connection}.merge(options)
-        if block_given?
-          PostgreSQLCursor::Cursor.new(sql, options).each do |row, column_types|
-            model = ::ActiveRecord::VERSION::MAJOR < 4 ?  instantiate(row) : instantiate(row, column_types)
-            yield model
-          end
-        else
-          PostgreSQLCursor::Cursor.new(sql, options).instance_iterator(self)
-        end
+        cursor  = PostgreSQLCursor::Cursor.new(sql, options)
+        return cursor.each_instance(self, &block) if block_given?
+        cursor.iterate_type(self)
       end
 
       # Returns and array of the given column names. Use if you need cursors and don't expect
       # this to comsume too much memory. Values are strings. Like ActiveRecord's pluck.
       def pluck_rows(*cols)
-        all.pluck_row(*cols)
+        options = cols.last.is_a?(Hash) ? cols.pop : {}
+        all.each_row(options).pluck(*cols)
       end
       alias :pluck_row :pluck_rows
 
       # Returns and array of the given column names. Use if you need cursors and don't expect
       # this to comsume too much memory. Values are instance types. Like ActiveRecord's pluck.
       def pluck_instances(*cols)
-        all.pluck_instance(*cols)
+        options = cols.last.is_a?(Hash) ? cols.pop : {}
+        all.each_instance(options).pluck(*cols)
       end
       alias :pluck_instance :pluck_instances
     end

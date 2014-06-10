@@ -41,23 +41,76 @@ module PostgreSQLCursor
       @options    = options
       @connection = @options.fetch(:connection) { ::ActiveRecord::Base.connection }
       @count      = 0
-      @iterate    = :rows
+      @iterate    = options[:instances] ? :each_instance : :each_row
     end
 
-    def instance_iterator(type)
-      @iterate = :instances
-      @type    = type
+    # Specify the type to instantiate, or reset to return a Hash
+    def iterate_type(type=nil)
+      if type.nil? || type == Hash
+        @iterate = :each_row
+      else
+        @iterate = :each_instance
+        @type    = type
+      end
       self
     end
 
     # Public: Yields each row of the result set to the passed block
-    #
     #
     # Yields the row to the block. The row is a hash with symbolized keys.
     #   {colname: value, ....}
     #
     # Returns the count of rows processed
     def each(&block)
+      if @iterate == :each_row
+        self.each_row(&block)
+      else
+        self.each_instance(@type, &block)
+      end
+    end
+
+    def each_row(&block)
+      self.each_tuple do |row|
+        row = row.symbolize_keys if @options[:symbolize_keys]
+        block.call(row)
+      end
+    end
+
+    def each_instance(klass=nil, &block)
+      klass ||= @type
+      self.each_tuple do |row|
+        if ::ActiveRecord::VERSION::MAJOR < 4
+          model = klass.send(:instantiate,row)
+        else
+          @column_types ||= column_types
+          model = klass.send(:instantiate, row, @column_types)
+        end
+        block.call(model)
+      end
+    end
+
+    # Returns an array of columns plucked from the result rows.
+    # Experimental function, as this could still use too much memory
+    # and negate the purpose of this libarary.
+    # Should this return a lazy enumerator instead?
+    def pluck(*cols)
+      options = cols.last.is_a?(Hash) ? cols.pop : {}
+      @options.merge!(options)
+      @options[:symbolize_keys] = true
+      self.iterate_type(options[:class]) if options[:class]
+      cols    = cols.map {|c| c.to_sym }
+      result  = []
+
+      self.each() do |row|
+        row = row.symbolize_keys if row.is_a?(Hash)
+        result << cols.map { |c| row[c] }
+      end
+
+      result.flatten! if cols.size == 1
+      result
+    end
+
+    def each_tuple(&block) #:nodoc:
       has_do_until  = @options.has_key?(:until)
       has_do_while  = @options.has_key?(:while)
       @count        = 0
@@ -68,18 +121,7 @@ module PostgreSQLCursor
           while (row = fetch) do
             break if row.size==0
             @count += 1
-            if @iterate == :instances
-              model = if ::ActiveRecord::VERSION::MAJOR < 4
-                @type.send(:instantiate,row)
-              else
-                @type.send(:instantiate,row, column_types)
-              end
-              rc = yield(model)
-            else
-              row = cast_types(row, column_types) if options[:symbolize_keys]
-              row = row.symbolize_keys if options[:cast]
-              rc = yield(row, column_types)
-            end
+            rc = block.call(row)
             break if has_do_until && rc == @options[:until]
             break if has_do_while && rc != @options[:while]
           end
@@ -109,7 +151,6 @@ module PostgreSQLCursor
           warn "unknown OID: #{fname}(#{oid}) (#{sql})"
           OID::Identity.new
         }
-
       end
 
       @column_types = types

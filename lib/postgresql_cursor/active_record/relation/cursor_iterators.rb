@@ -20,11 +20,9 @@ module PostgreSQLCursor
         # Returns the number of rows yielded to the block
         def each_row(options={}, &block)
           options = {:connection => self.connection}.merge(options)
-          if block_given?
-            PostgreSQLCursor::Cursor.new(to_sql, options).each(&block)
-          else
-            PostgreSQLCursor::Cursor.new(to_sql, options)
-          end
+          cursor  = PostgreSQLCursor::Cursor.new(to_sql, options)
+          return cursor.each_row(&block) if block_given?
+          cursor
         end
         alias :each_hash :each_row
 
@@ -39,39 +37,27 @@ module PostgreSQLCursor
         # Returns the number of rows yielded to the block
         def each_instance(options={}, &block)
           options = {:connection => self.connection}.merge(options)
-          options[:symbolize_keys] = false # Must be strings to initiate
-
-          if block_given?
-            PostgreSQLCursor::Cursor.new(to_sql, options).each do |row, column_types|
-              model = ::ActiveRecord::VERSION::MAJOR < 4 ?  instantiate(row) : instantiate(row, column_types)
-              yield model
-            end
-          else
-            PostgreSQLCursor::Cursor.new(to_sql, options).instance_iterator(self)
-          end
+          cursor = PostgreSQLCursor::Cursor.new(to_sql, options)
+          return cursor.each_instance(self, &block) if block_given?
+          cursor.iterate_type(self)
         end
 
+        # Plucks the column names from the rows, and return them in an array
         def pluck_rows(*cols)
-          pluck_method(:each_row, *cols)
+          options = cols.last.is_a?(Hash) ? cols.pop : {}
+          options[:connection] = self.connection
+          self.each_row(options).pluck(*cols)
         end
         alias :pluck_row :pluck_rows
 
+        # Plucks the column names from the instances, and return them in an array
         def pluck_instances(*cols)
-          pluck_method(:each_instance, *cols)
+          options = cols.last.is_a?(Hash) ? cols.pop : {}
+          options[:connection] = self.connection
+          self.each_instance(options).pluck(*cols)
         end
         alias :pluck_instance :pluck_instances
 
-        def pluck_method(method, *cols)
-          options = cols.last.is_a?(Hash) ? cols.pop : {}
-          cols = cols.map {|c| c.to_sym }
-          result = []
-          self.send(method, options) do |row|
-            row = row.symbolize_keys if row.is_a?(Hash)
-            result << cols.map{ |c| row[c] }
-          end
-          result.flatten! if cols.size == 1
-          result
-        end
       end
     end
   end
