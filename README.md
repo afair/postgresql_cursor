@@ -51,7 +51,7 @@ Product.each_instance.lazy.inject(0) {|sum,r| sum +  r.quantity } #=> 499500
 All these methods take an options hash to control things more:
 
     block_size:n      The number of rows to fetch from the database each time (default 1000)
-    while:value       Continue looping as long as the block returns this value  
+    while:value       Continue looping as long as the block returns this value
     until:value       Continue looping until the block returns this value
     connection:conn   Use this connection instead of the current Product connection
     fraction:float    A value to set for the cursor_tuple_fraction variable.
@@ -102,6 +102,16 @@ Product.select(:id).each_row.map {|r| r["id"].to_i } # cursor instead of pluck
 Product.pluck_rows(:id) #=> ["1", "2", ...]
 Product.pluck_instances(:id, :quantity) #=> [[1, 503], [2, 932], ...]
 ```
+
+###Associations and Eager Loading
+
+ActiveRecord performs some magic when eager-loading associated row. It
+will usually not join the tables, and prefers to load the data in
+separate queries.
+
+This library hooks onto the `to_sql` feature of the query builder. As a
+result, it can't do the join if ActiveRecord decided not to join, nor
+can it construct the association objects eagerly.
 
 ##Background: Why PostgreSQL Cursors?
 

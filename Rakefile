@@ -9,7 +9,7 @@ task :test do
   sh "ruby test/test_*"
 end
 
-desc "Open and IRB Console with the gem loaded"
+desc "Open and IRB Console with the gem and test-app loaded"
 task :console do
   sh "bundle exec irb  -Ilib -I . -r postgresql_cursor -r test-app/app"
   #require 'irb'
