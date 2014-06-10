@@ -34,7 +34,7 @@ module PostgreSQLCursor
       end
 
       # Public: Returns each row as a hash to the given block
-      #
+
       # sql         - Full SQL statement, variables interpolated
       # options     - Hash to control
       #   fraction: 0.1..1.0    - The cursor_tuple_fraction (default 1.0)
@@ -77,12 +77,21 @@ module PostgreSQLCursor
         else
           PostgreSQLCursor::Cursor.new(sql, options).instance_iterator(self)
         end
-
-        #PostgreSQLCursor::Cursor.new(sql, options).each do |row|
-        #  model = instantiate(row)
-        #  yield model
-        #end
       end
+
+      # Returns and array of the given column names. Use if you need cursors and don't expect
+      # this to comsume too much memory. Values are strings. Like ActiveRecord's pluck.
+      def pluck_rows(*cols)
+        all.pluck_row(*cols)
+      end
+      alias :pluck_row :pluck_rows
+
+      # Returns and array of the given column names. Use if you need cursors and don't expect
+      # this to comsume too much memory. Values are instance types. Like ActiveRecord's pluck.
+      def pluck_instances(*cols)
+        all.pluck_instance(*cols)
+      end
+      alias :pluck_instance :pluck_instances
     end
   end
 end

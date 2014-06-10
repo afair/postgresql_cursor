@@ -10,7 +10,7 @@
 #   while: value          - Exits loop when block does not return this value.
 #   until: value          - Exits loop when block returns this value.
 #
-# Exmaples: 
+# Exmaples:
 #   PostgreSQLCursor::Cursor.new("select ...").each { |hash| ... }
 #   ActiveRecordModel.where(...).each_row { |hash| ... }
 #   ActiveRecordModel.each_row_by_sql("select ...") { |hash| ... }
@@ -69,7 +69,7 @@ module PostgreSQLCursor
             break if row.size==0
             @count += 1
             if @iterate == :instances
-              model = if ::ActiveRecord::VERSION::MAJOR < 4 
+              model = if ::ActiveRecord::VERSION::MAJOR < 4
                 @type.send(:instantiate,row)
               else
                 @type.send(:instantiate,row, column_types)
@@ -108,7 +108,7 @@ module PostgreSQLCursor
         types[fname] = @connection.get_type_map.fetch(ftype, fmod) { |oid, mod|
           warn "unknown OID: #{fname}(#{oid}) (#{sql})"
           OID::Identity.new
-        }   
+        }
 
       end
 
@@ -125,7 +125,7 @@ module PostgreSQLCursor
 
     # Public: Returns the next row from the cursor, or empty hash if end of results
     #
-    # Returns a row as a hash of {'colname'=>value,...} 
+    # Returns a row as a hash of {'colname'=>value,...}
     def fetch
       fetch_block if @block.size==0
       @block.shift
@@ -144,7 +144,7 @@ module PostgreSQLCursor
     end
 
     # Private: Sets the PostgreSQL cursor_tuple_fraction value = 1.0 to assume all rows will be fetched
-    # This is a value between 0.1 and 1.0 (PostgreSQL defaults to 0.1, this library defaults to 1.0) 
+    # This is a value between 0.1 and 1.0 (PostgreSQL defaults to 0.1, this library defaults to 1.0)
     # used to determine the expected fraction (percent) of result rows returned the the caller.
     # This value determines the access path by the query planner.
     def set_cursor_tuple_fraction(frac=1.0)

@@ -51,6 +51,27 @@ module PostgreSQLCursor
           end
         end
 
+        def pluck_rows(*cols)
+          pluck_method(:each_row, *cols)
+        end
+        alias :pluck_row :pluck_rows
+
+        def pluck_instances(*cols)
+          pluck_method(:each_instance, *cols)
+        end
+        alias :pluck_instance :pluck_instances
+
+        def pluck_method(method, *cols)
+          options = cols.last.is_a?(Hash) ? cols.pop : {}
+          cols = cols.map {|c| c.to_sym }
+          result = []
+          self.send(method, options) do |row|
+            row = row.symbolize_keys if row.is_a?(Hash)
+            result << cols.map{ |c| row[c] }
+          end
+          result.flatten! if cols.size == 1
+          result
+        end
       end
     end
   end

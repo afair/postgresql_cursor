@@ -90,12 +90,17 @@ Product.select(:id, :name).each_row { |product| product.process }
 Pluck is a great alternative instead of using a cursor. It does not instantiate
 the row, and builds an array of result values, and translates the values into ruby
 values (numbers, Timestamps. etc.). Using the cursor would still allow you to lazy
-load them in batches.
+load them in batches for very large sets.
+
+You can also use the `pluck_rows` or `pluck_instances` if the results
+won't eat up too much memory.
 
 ```ruby
-Product.newly_arrived.pluck(:id) #=> [1, 2, 3, 4, etc.]
+Product.newly_arrived.pluck(:id) #=> [1, 2, 3, ...]
 Product.newly_arrived.each_row { |hash| }
 Product.select(:id).each_row.map {|r| r["id"].to_i } # cursor instead of pluck
+Product.pluck_rows(:id) #=> ["1", "2", ...]
+Product.pluck_instances(:id, :quantity) #=> [[1, 503], [2, 932], ...]
 ```
 
 ##Background: Why PostgreSQL Cursors?

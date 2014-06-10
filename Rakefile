@@ -11,9 +11,10 @@ end
 
 desc "Open and IRB Console with the gem loaded"
 task :console do
-  require 'irb'
-  ARGV.clear
-  IRB.start
+  sh "bundle exec irb  -Ilib -I . -r postgresql_cursor -r test-app/app"
+  #require 'irb'
+  #ARGV.clear
+  #IRB.start
 end
 
 desc "Setup testing database and table"
