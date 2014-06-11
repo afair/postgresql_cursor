@@ -5,6 +5,14 @@
 PostgreSQLCursor extends ActiveRecord to allow for efficient processing of queries
 returning a large number of rows, and allows you to sort your result set.
 
+In PostgreSQL, a
+[cursor](http://www.postgresql.org/docs/9.4/static/plpgsql-cursors.html)
+runs a query, from which you fetch a block of
+(say 1000) rows, process them, and continue fetching until the result
+set is exhausted. By fetching a smaller chunk of data, this reduces the
+amount of memory your application uses and prevents the potential crash
+of running out of memory.
+
 Version 0.5.0 has been refactored to install more smoothly into ActiveRecord.
 It supports Rails and ActiveRecord 3.2.x and up.
 
