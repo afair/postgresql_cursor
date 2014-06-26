@@ -1,0 +1,34 @@
+PATH
+  remote: /Users/allen/src/postgresql_cursor
+  specs:
+    postgresql_cursor (0.5.0)
+      activerecord (>= 3.2.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    activemodel (3.2.18)
+      activesupport (= 3.2.18)
+      builder (~> 3.0.0)
+    activerecord (3.2.18)
+      activemodel (= 3.2.18)
+      activesupport (= 3.2.18)
+      arel (~> 3.0.2)
+      tzinfo (~> 0.3.29)
+    activesupport (3.2.18)
+      i18n (~> 0.6, >= 0.6.4)
+      multi_json (~> 1.0)
+    arel (3.0.3)
+    builder (3.0.4)
+    i18n (0.6.9)
+    multi_json (1.10.1)
+    pg (0.17.1)
+    tzinfo (0.3.39)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  activerecord (~> 3.2.0)
+  pg
+  postgresql_cursor!
