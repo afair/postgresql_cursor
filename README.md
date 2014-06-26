@@ -43,19 +43,6 @@ Product.each_row_by_sql("select * from products") { |hash| Product.process(hash)
 Product.each_instance_by_sql("select * from products") { |product| product.process }
 ```
 
-###PostgreSQLCursor is an Enumerable
-
-If you do not pass in a block, the cursor is returned, which mixes in the Enumerable
-libary. With that, you can pass it around, or chain in the awesome enumerable things
-like `map` and `reduce`. Furthermore, the cursors already act as `lazy`, but you can
-also chain in `lazy` when you want to keep the memory footprint small for rest of the process.
-
-```ruby
-Product.each_row.map {|r| r["id"].to_i } #=> [1, 2, 3, ...]
-Product.each_instance.map {|r| r.id }.each {|id| p id } #=> [1, 2, 3, ...]
-Product.each_instance.lazy.inject(0) {|sum,r| sum +  r.quantity } #=> 499500
-```
-
 All these methods take an options hash to control things more:
 
     block_size:n      The number of rows to fetch from the database each time (default 1000)
@@ -74,6 +61,18 @@ Notes:
 * Aliases each_hash and each_hash_by_sql are provided for each_row and each_row_by_sql
   if you prefer to express what types are being returned.
 
+###PostgreSQLCursor is an Enumerable
+
+If you do not pass in a block, the cursor is returned, which mixes in the Enumerable
+libary. With that, you can pass it around, or chain in the awesome enumerable things
+like `map` and `reduce`. Furthermore, the cursors already act as `lazy`, but you can
+also chain in `lazy` when you want to keep the memory footprint small for rest of the process.
+
+```ruby
+Product.each_row.map {|r| r["id"].to_i } #=> [1, 2, 3, ...]
+Product.each_instance.map {|r| r.id }.each {|id| p id } #=> [1, 2, 3, ...]
+Product.each_instance.lazy.inject(0) {|sum,r| sum +  r.quantity } #=> 499500
+```
 ###Hashes vs. Instances
 
 The each_row method returns the Hash of strings for speed (as this allows you to process a lot of rows).
