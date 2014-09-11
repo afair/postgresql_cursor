@@ -20,7 +20,7 @@ module PostgreSQLCursor
         # Returns the number of rows yielded to the block
         def each_row(options={}, &block)
           options = {:connection => self.connection}.merge(options)
-          cursor  = PostgreSQLCursor::Cursor.new(to_sql, options)
+          cursor  = PostgreSQLCursor::Cursor.new(to_unprepared_sql, options)
           return cursor.each_row(&block) if block_given?
           cursor
         end
@@ -37,7 +37,7 @@ module PostgreSQLCursor
         # Returns the number of rows yielded to the block
         def each_instance(options={}, &block)
           options = {:connection => self.connection}.merge(options)
-          cursor = PostgreSQLCursor::Cursor.new(to_sql, options)
+          cursor = PostgreSQLCursor::Cursor.new(to_unprepared_sql, options)
           return cursor.each_instance(self, &block) if block_given?
           cursor.iterate_type(self)
         end
@@ -57,6 +57,21 @@ module PostgreSQLCursor
           self.each_instance(options).pluck(*cols)
         end
         alias :pluck_instance :pluck_instances
+
+        private
+
+        # Returns sql string like #to_sql, but with bind parameters interpolated.
+        # ActiveRecord sets up query as prepared statements with bind variables.
+        # Cursors will prepare statements regardless.
+        def to_unprepared_sql
+          if self.connection.respond_to?(:unprepared_statement)
+            self.connection.unprepared_statement do
+              to_sql
+            end
+          else
+            to_sql
+          end
+        end
 
       end
     end
