@@ -181,7 +181,9 @@ module PostgreSQLCursor
 
     # Public: Closes the cursor
     def close
-      @connection.execute("close cursor_#{@cursor}")
+      suppress(::ActiveRecord::StatementInvalid) do
+        @connection.execute("close cursor_#{@cursor}")
+      end
     end
 
     # Private: Sets the PostgreSQL cursor_tuple_fraction value = 1.0 to assume all rows will be fetched
