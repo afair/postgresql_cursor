@@ -60,6 +60,14 @@ class TestPostgresqlCursor < Minitest::Test
     end
   end
 
+  def test_exception_raised_by_active_record
+    begin
+      Product.each_row_by_sql("SELECT * FROM unknown_table") {}
+    rescue => e
+      assert e.message.match('PG::UndefinedTable')
+    end
+  end
+
   def test_cursor
     cursor = Product.all.each_row
     assert cursor.respond_to?(:each)
@@ -78,5 +86,5 @@ class TestPostgresqlCursor < Minitest::Test
     assert_equal 1000, r.size
     assert_equal Fixnum, r.first.class
   end
-  
+
 end
