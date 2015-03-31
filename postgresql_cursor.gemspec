@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
  #spec.add_dependency "pg" # Remove this for jruby, which should specify 'activerecord-jdbcpostgresql-adapter'
-  spec.add_dependency "activerecord", ">= 3.2.0"
+  spec.add_dependency "activerecord", ">= 3.1.0"
 
   spec.add_development_dependency "pg"
   spec.add_development_dependency "rake"
