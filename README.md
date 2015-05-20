@@ -161,7 +161,7 @@ There are drawbacks with these methods:
 
 ##Meta
 ###Author
-Allen Fair, [@allenfair](https://twitter/com/allenfair), http://github.com/afair
+Allen Fair, [@allenfair](https://twitter.com/allenfair), http://github.com/afair
 
 Thanks to:
 
