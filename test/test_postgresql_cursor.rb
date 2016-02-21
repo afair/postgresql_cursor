@@ -89,4 +89,16 @@ class TestPostgresqlCursor < Minitest::Test
     end
     assert_equal 3, items
   end
+
+  def test_fetch_symbolize_keys
+    Product.transaction do
+      cursor = PostgreSQLCursor::Cursor.new("select * from products order by 1")
+      r = cursor.fetch
+      assert r.has_key?("id")
+      r = cursor.fetch(symbolize_keys:true)
+      assert r.has_key?(:id)
+      cursor.close
+    end
+  end
+
 end

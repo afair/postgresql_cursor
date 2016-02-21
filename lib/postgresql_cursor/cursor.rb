@@ -170,9 +170,12 @@ module PostgreSQLCursor
     # Public: Returns the next row from the cursor, or empty hash if end of results
     #
     # Returns a row as a hash of {'colname'=>value,...}
-    def fetch
+    def fetch(options={})
+      open unless @block
       fetch_block if @block.size==0
-      @block.shift
+      row = @block.shift
+      row = row.symbolize_keys if row && options[:symbolize_keys]
+      row
     end
 
     # Private: Fetches the next block of rows into @block
