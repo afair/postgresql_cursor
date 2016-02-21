@@ -18,8 +18,13 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
- #spec.add_dependency "pg" # Remove this for jruby, which should specify 'activerecord-jdbcpostgresql-adapter'
+  #spec.add_dependency "pg" # Remove this for jruby, which should specify 'activerecord-jdbcpostgresql-adapter'
   spec.add_dependency "activerecord", ">= 3.1.0"
+  #spec.add_dependency "activerecord", "~> 3.1.0"
+  # Tests don't run on 4.0.0 since AR/AS have an older version of minitest as a run-time dependency(!) than our tests support
+  #spec.add_dependency "activerecord", "~> 4.0.0";# spec.add_dependency "minitest", "~> 4.2.0"
+  #spec.add_dependency "activerecord", "~> 4.1.0"
+  #spec.add_dependency "activerecord", "~> 5.0.0.beta2"
 
   spec.add_development_dependency "pg"
   spec.add_development_dependency "rake"

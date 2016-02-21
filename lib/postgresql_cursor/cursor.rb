@@ -9,6 +9,7 @@
 #   block_size: 1..n      - The number of rows to fetch per db block fetch
 #   while: value          - Exits loop when block does not return this value.
 #   until: value          - Exits loop when block returns this value.
+#   with_hold: boolean    - Allows the query to remain open across commit points.
 #
 # Exmaples:
 #   PostgreSQLCursor::Cursor.new("select ...").each { |hash| ... }
@@ -30,6 +31,7 @@ module PostgreSQLCursor
     #   fraction: 0.1..1.0    - The cursor_tuple_fraction (default 1.0)
     #   block_size: 1..n      - The number of rows to fetch per db block fetch
     #                           Defaults to 1000
+    #   with_hold       - Allows the query to remain open across commit points.
     #
     # Examples
     #
@@ -160,7 +162,8 @@ module PostgreSQLCursor
     def open
       set_cursor_tuple_fraction
       @cursor = @@cursor_seq += 1
-      @result = @connection.execute("declare cursor_#{@cursor} cursor for #{@sql}")
+      hold = @options[:with_hold] ? 'with hold ' : ''
+      @result = @connection.execute("declare cursor_#{@cursor} cursor #{hold}for #{@sql}")
       @block = []
     end
 

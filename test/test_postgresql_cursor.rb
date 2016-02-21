@@ -78,5 +78,15 @@ class TestPostgresqlCursor < Minitest::Test
     assert_equal 1000, r.size
     assert_equal Fixnum, r.first.class
   end
-  
+
+  def test_with_hold
+    items = 0
+    Product.where("id < 4") .each_instance(with_hold: true, block_size:1) do |row|
+      Product.transaction do
+        row.update(data:Time.now.to_f.to_s)
+        items += 1
+      end
+    end
+    assert_equal 3, items
+  end
 end

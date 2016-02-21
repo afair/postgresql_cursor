@@ -13,10 +13,16 @@ set is exhausted. By fetching a smaller chunk of data, this reduces the
 amount of memory your application uses and prevents the potential crash
 of running out of memory.
 
-Version 0.5.0 has been refactored to install more smoothly into ActiveRecord.
-It supports Rails and ActiveRecord 3.2.x and up.
+This extension is not intended to support the "FOR UPDATE / WHERE
+CURRENT OF" syntax to process and update each row in place. The primary
+goal is to read a large number of rows using buffering.
 
-##Use Cursors
+Supports Rails/ActiveRecord v3.1 (v3.2 recommended) or higher and Ruby
+1.9 and higher. Not all features work in ActiveRecord v3.1. Support
+for this gem will only be for officially supported versions of
+ActiveRecord and Ruby; others can try older versions of the gem.
+
+##Using Cursors
 
 PostgreSQLCursor was developed to take advantage of PostgreSQL's cursors. Cursors allow the program
 to declare a cursor to run a given query returning "chunks" of rows to the application program while
@@ -53,6 +59,7 @@ All these methods take an options hash to control things more:
                       PostgreSQL uses 0.1 (optimize for 10% of result set)
                       This library uses 1.0 (Optimize for 100% of the result set)
                       Do not override this value unless you understand it.
+    with_hold:boolean Keep the cursor "open" even after a commit.
 
 Notes:
 
@@ -158,6 +165,18 @@ There are drawbacks with these methods:
 * The query is rerun for each chunk (1000 rows), starting at the next id sequence.
 * You cannot use overly complex queries as that will be rerun and incur more overhead.
 
+### How it works
+
+Under the covers, the library calls the PostgreSQL cursor operations
+with the psuedo-code:
+
+    SET cursor_tuple_fraction TO 1.0;
+    DECLARE cursor_1 CURSOR WITH HOLD FOR select * from widgets;
+    loop
+      rows = FETCH 100 FROM cursor_1;
+      rows.each {|row| yield row}
+    until rows.size < 100
+    close cursor_1;
 
 ##Meta
 ###Author
@@ -178,6 +197,11 @@ Thanks to:
 * Commit, do not mess with rakefile, version, or history.
   (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
 * Send me a pull request. Bonus points for topic branches.
+
+###Code of Conduct
+
+This project adheres to the [Open Code of Conduct](http://todogroup.org/opencodeofconduct/#postgresql_cursor/2016@allenfair.com).
+By participating, you are expected to honor this code.
 
 ###Copyright
 

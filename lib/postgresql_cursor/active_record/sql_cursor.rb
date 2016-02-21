@@ -9,6 +9,7 @@ module PostgreSQLCursor
       #   block_size: 1..n      - The number of rows to fetch per db block fetch
       #   while: value          - Exits loop when block does not return this value.
       #   until: value          - Exits loop when block returns this value.
+      #   with_hold: boolean    - Allows the query to remain open across commit points.
       #
       # Example:
       #   Post.each_row { |hash| Post.process(hash) }
@@ -41,6 +42,7 @@ module PostgreSQLCursor
       #   block_size: 1..n      - The number of rows to fetch per db block fetch
       #   while: value          - Exits loop when block does not return this value.
       #   until: value          - Exits loop when block returns this value.
+      #   with_hold: boolean    - Allows the query to remain open across commit points.
       #
       # Example:
       #   Post.each_row_by_sql("select * from posts") { |hash| Post.process(hash) }
