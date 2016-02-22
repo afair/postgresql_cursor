@@ -47,8 +47,11 @@ Product.each_instance { |product| product.process }
 
 Product.each_row_by_sql("select * from products") { |hash| Product.process(hash) }
 Product.each_instance_by_sql("select * from products") { |product| product.process }
+```
 
-\# Cursors must be run in a transaction if you need to fetch each row yourself
+Cursors must be run in a transaction if you need to fetch each row yourself
+
+```ruby
 Product.transaction do
   cursor = Product.all.each_row
   row = cursor.fetch                       #=> {"id"=>"1"}
