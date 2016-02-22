@@ -17,9 +17,9 @@ This extension is not intended to support the "FOR UPDATE / WHERE
 CURRENT OF" syntax to process and update each row in place. The primary
 goal is to read a large number of rows using buffering.
 
-Supports Rails/ActiveRecord v3.1 (v3.2 recommended) or higher and Ruby
-1.9 and higher. Not all features work in ActiveRecord v3.1. Support
-for this gem will only be for officially supported versions of
+Supports Rails/ActiveRecord v3.1 (v3.2 recommended) higher (including
+v5.0) and Ruby 1.9 and higher. Not all features work in ActiveRecord v3.1.
+Support for this gem will only be for officially supported versions of
 ActiveRecord and Ruby; others can try older versions of the gem.
 
 ##Using Cursors

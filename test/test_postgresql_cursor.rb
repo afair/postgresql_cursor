@@ -95,10 +95,8 @@ class TestPostgresqlCursor < Minitest::Test
       #cursor = PostgreSQLCursor::Cursor.new("select * from products order by 1")
       cursor = Product.all.each_row
       r = cursor.fetch
-      p r
       assert r.has_key?("id")
       r = cursor.fetch(symbolize_keys:true)
-      p r
       assert r.has_key?(:id)
       cursor.close
     end
