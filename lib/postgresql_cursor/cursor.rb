@@ -130,7 +130,7 @@ module PostgreSQLCursor
         rescue Exception => e
           raise e
         ensure
-          close
+          close if @block
         end
       end
       @count

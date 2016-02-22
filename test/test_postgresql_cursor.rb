@@ -101,4 +101,12 @@ class TestPostgresqlCursor < Minitest::Test
     end
   end
 
+  def test_bad_sql
+    begin
+      ActiveRecord::Base.each_row_by_sql('select * from bad_table') { }
+      raise "Did Not Raise Expected Exception"
+    rescue Exception => e
+      assert_match(/bad_table/, e.message)
+    end
+  end
 end
