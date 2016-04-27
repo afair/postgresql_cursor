@@ -31,6 +31,14 @@ class TestPostgresqlCursor < Minitest::Test
     assert_equal 1000, n
   end
 
+  def test_each_array
+    c = PostgreSQLCursor::Cursor.new("select * from products where id = 1")
+    c.each_array do |ary|
+      assert_equal Array, ary.class
+      assert_equal 1, ary[0].to_i
+    end
+  end
+
   def test_relation
     nn = 0
     Product.where("id>0").each_row {|r| nn += 1 }
