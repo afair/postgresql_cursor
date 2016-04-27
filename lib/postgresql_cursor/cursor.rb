@@ -50,6 +50,8 @@ module PostgreSQLCursor
     def iterate_type(type=nil)
       if type.nil? || type == Hash
         @iterate = :each_row
+      elsif type == Array
+        @iterate = :each_array
       else
         @iterate = :each_instance
         @type    = type
@@ -66,6 +68,8 @@ module PostgreSQLCursor
     def each(&block)
       if @iterate == :each_row
         self.each_row(&block)
+      elsif @iterate == :each_array
+        self.each_array(&block)
       else
         self.each_instance(@type, &block)
       end
@@ -76,6 +80,19 @@ module PostgreSQLCursor
         row = row.symbolize_keys if @options[:symbolize_keys]
         block.call(row)
       end
+    end
+
+    def each_array(&block)
+      old_iterate = @iterate
+      @iterate = :each_array
+      begin
+        rv = self.each_tuple do |row|
+          block.call(row)
+        end
+      ensure
+        @iterate = old_iterate
+      end
+      rv
     end
 
     def each_instance(klass=nil, &block)
@@ -182,7 +199,12 @@ module PostgreSQLCursor
     def fetch_block(block_size=nil)
       block_size ||= @block_size ||= @options.fetch(:block_size) { 1000 }
       @result = @connection.execute("fetch #{block_size} from cursor_#{@cursor}")
-      @block = @result.collect {|row| row } # Make our own
+
+      if @iterate == :each_array
+        @block = @result.each_row.collect {|row| row }
+      else
+        @block = @result.collect {|row| row }
+      end
     end
 
     # Public: Closes the cursor
