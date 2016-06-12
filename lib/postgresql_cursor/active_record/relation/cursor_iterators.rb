@@ -60,6 +60,7 @@ module PostgreSQLCursor
 
         private
 
+        # Returns sql string like #to_sql, but projection node is replaced by specified columns
         def to_pluck_sql(cols)
           self.arel.projections = cols.map {|col|
             Arel::Nodes::SqlLiteral.new(col.to_s)
