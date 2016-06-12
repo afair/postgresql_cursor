@@ -42,21 +42,15 @@ module PostgreSQLCursor
           cursor.iterate_type(self)
         end
 
-        # Plucks the column names from the rows, and return them in an array
+        # Plucks the specified column(s), and return them in an array
         def pluck_rows(*cols)
           options = cols.last.is_a?(Hash) ? cols.pop : {}
           options[:connection] = self.connection
           PostgreSQLCursor::Cursor.new(to_pluck_sql(cols), options).pluck(*cols)
         end
         alias :pluck_row :pluck_rows
-
-        # Plucks the column names from the instances, and return them in an array
-        def pluck_instances(*cols)
-          options = cols.last.is_a?(Hash) ? cols.pop : {}
-          options[:connection] = self.connection
-          PostgreSQLCursor::Cursor.new(to_pluck_sql(cols), options).iterate_type(self).pluck(*cols)
-        end
-        alias :pluck_instance :pluck_instances
+        alias :pluck_instance :pluck_rows
+        alias :pluck_insntaces :pluck_rows
 
         private
 
