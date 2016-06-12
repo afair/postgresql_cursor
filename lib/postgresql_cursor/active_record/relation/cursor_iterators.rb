@@ -46,7 +46,7 @@ module PostgreSQLCursor
         def pluck_rows(*cols)
           options = cols.last.is_a?(Hash) ? cols.pop : {}
           options[:connection] = self.connection
-          self.each_row(options).pluck(*cols)
+          PostgreSQLCursor::Cursor.new(to_pluck_sql(cols), options).pluck(*cols)
         end
         alias :pluck_row :pluck_rows
 
@@ -54,11 +54,18 @@ module PostgreSQLCursor
         def pluck_instances(*cols)
           options = cols.last.is_a?(Hash) ? cols.pop : {}
           options[:connection] = self.connection
-          self.each_instance(options).pluck(*cols)
+          PostgreSQLCursor::Cursor.new(to_pluck_sql(cols), options).iterate_type(self).pluck(*cols)
         end
         alias :pluck_instance :pluck_instances
 
         private
+
+        def to_pluck_sql(cols)
+          self.arel.projections = cols.map {|col|
+            Arel::Nodes::SqlLiteral.new(col.to_s)
+          }
+          to_unprepared_sql
+        end
 
         # Returns sql string like #to_sql, but with bind parameters interpolated.
         # ActiveRecord sets up query as prepared statements with bind variables.
