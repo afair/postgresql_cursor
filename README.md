@@ -144,7 +144,7 @@ ActiveRecord is designed and optimized for web performance. In a web transaction
 around 20 rows is returned to the user. When you do this
 
 ```ruby
-Product.find_each { |product| product.process }
+Product.where("id>0").each { |product| product.process }
 ```
 
 The database returns all matching result set rows to ActiveRecord, which instantiates each row with
