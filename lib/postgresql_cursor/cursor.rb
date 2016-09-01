@@ -134,7 +134,7 @@ module PostgreSQLCursor
       has_do_while  = @options.has_key?(:while)
       @count        = 0
       @column_types = nil
-      @connection.transaction do
+      with_optional_transaction do
         begin
           open
           while (row = fetch) do
@@ -210,6 +210,15 @@ module PostgreSQLCursor
     # Public: Closes the cursor
     def close
       @connection.execute("close cursor_#{@cursor}")
+    end
+
+    # Private: Open transaction unless with_hold option, specified
+    def with_optional_transaction
+      if @options[:with_hold]
+        yield
+      else
+        @connection.transaction { yield }
+      end
     end
 
     # Private: Sets the PostgreSQL cursor_tuple_fraction value = 1.0 to assume all rows will be fetched
