@@ -21,7 +21,6 @@ module PostgreSQLCursor
   class Cursor
     include Enumerable
     attr_reader :sql, :options, :connection, :count, :result
-    @@cursor_seq = 0
 
     # Public: Start a new PostgreSQL cursor query
     # sql     - The SQL statement with interpolated values
@@ -178,7 +177,8 @@ module PostgreSQLCursor
     # Public: Opens (actually, "declares") the cursor. Call this before fetching
     def open
       set_cursor_tuple_fraction
-      @cursor = @@cursor_seq += 1
+      #@cursor = Digest::MD5.hexdigest(@sql)
+      @cursor = SecureRandom.uuid.gsub("-","")
       hold = @options[:with_hold] ? 'with hold ' : ''
       @result = @connection.execute("declare cursor_#{@cursor} cursor #{hold}for #{@sql}")
       @block = []

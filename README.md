@@ -150,7 +150,7 @@ Product.where("id>0").each { |product| product.process }
 The database returns all matching result set rows to ActiveRecord, which instantiates each row with
 the data returned. This function returns an array of all these rows to the caller.
 
-Asyncronous, Background, or Offline processing may require processing a large amount of data.
+Asynchronous, Background, or Offline processing may require processing a large amount of data.
 When there is a very large number of rows, this requires a lot more memory to hold the data. Ruby
 does not return that memory after processing the array, and the causes your process to "bloat". If you
 don't have enough memory, it will cause an exception.
