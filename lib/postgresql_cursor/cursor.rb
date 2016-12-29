@@ -177,10 +177,9 @@ module PostgreSQLCursor
     # Public: Opens (actually, "declares") the cursor. Call this before fetching
     def open
       set_cursor_tuple_fraction
-      #@cursor = Digest::MD5.hexdigest(@sql)
       @cursor = SecureRandom.uuid.gsub("-","")
       hold = @options[:with_hold] ? 'with hold ' : ''
-      @result = @connection.execute("declare cursor_#{@cursor} cursor #{hold}for #{@sql}")
+      @result = @connection.execute("declare cursor_#{@cursor} no scroll cursor #{hold}for #{@sql}")
       @block = []
     end
 
