@@ -13,10 +13,6 @@ set is exhausted. By fetching a smaller chunk of data, this reduces the
 amount of memory your application uses and prevents the potential crash
 of running out of memory.
 
-This extension is not intended to support the "FOR UPDATE / WHERE
-CURRENT OF" syntax to process and update each row in place. The primary
-goal is to read a large number of rows using buffering.
-
 Supports Rails/ActiveRecord v3.1 (v3.2 recommended) higher (including
 v5.0) and Ruby 1.9 and higher. Not all features work in ActiveRecord v3.1.
 Support for this gem will only be for officially supported versions of
@@ -137,6 +133,27 @@ separate queries.
 This library hooks onto the `to_sql` feature of the query builder. As a
 result, it can't do the join if ActiveRecord decided not to join, nor
 can it construct the association objects eagerly.
+
+##Locking and Updating Each Row (FOR UPDATE Queries)
+
+When you use the AREL `lock` method, a "FOR UPDATE" clause is added to
+the query. This causes the block of rows returned from each FETCH
+operation (see the `block_size` option) to be locked for you to update.
+The lock is released on those rows once the block is exhausted and the
+next FETCH or CLOSE statement is executed.
+
+```ruby
+Product.lock.each_row {|p| p.update(...) }
+```
+
+Also, pay attention to the `block_size` you request. Locking large
+blocks of rows for an extended time can cause deadlocks or other
+performance issues in your application. On a busy table, or if the
+processing of each row consumes a lot of time or resources, try a
+`block_size` <= 10.
+
+See the [PostgreSQL Select Documentation](https://www.postgresql.org/docs/current/static/sql-select.html)
+for more information and limitations when using "FOR UPDATE" locking.
 
 ##Background: Why PostgreSQL Cursors?
 
