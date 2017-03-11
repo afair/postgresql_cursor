@@ -142,8 +142,11 @@ operation (see the `block_size` option) to be locked for you to update.
 The lock is released on those rows once the block is exhausted and the
 next FETCH or CLOSE statement is executed.
 
+This example will run through a large table and potentially update each
+row, locking only a set of rows at a time to allow concurrent use.
+
 ```ruby
-Product.lock.each_row {|p| p.update(...) }
+Product.lock.each_instance {|p| p.update(price: p.price * 1.05) }
 ```
 
 Also, pay attention to the `block_size` you request. Locking large
