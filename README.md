@@ -213,13 +213,7 @@ with the psuedo-code:
 
 ##Meta
 ###Author
-Allen Fair, [@allenfair](https://twitter.com/allenfair), http://github.com/afair
-
-Thanks to:
-
-* Iulian Dogariu, http://github.com/iulianu (Fixes)
-* Julian Mehnle, julian@mehnle.net (Suggestions)
-* ...And all the other contributers!
+Allen Fair, [@allenfair](https://twitter.com/allenfair), [github://afair](https://github.com/afair)
 
 ###Note on Patches/Pull Requests
 
@@ -238,4 +232,4 @@ By participating, you are expected to honor this code.
 
 ###Copyright
 
-Copyright (c) 2010-2014 Allen Fair. See (MIT) LICENSE for details.
+Copyright (c) 2010-2017 Allen Fair. See (MIT) LICENSE for details.
