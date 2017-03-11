@@ -146,7 +146,9 @@ This example will run through a large table and potentially update each
 row, locking only a set of rows at a time to allow concurrent use.
 
 ```ruby
-Product.lock.each_instance {|p| p.update(price: p.price * 1.05) }
+Product.lock.each_instance(block_size:100) do |p|
+  p.update(price: p.price * 1.05)
+end
 ```
 
 Also, pay attention to the `block_size` you request. Locking large
