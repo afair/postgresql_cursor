@@ -97,12 +97,7 @@ module PostgreSQLCursor
     def each_instance(klass=nil, &block)
       klass ||= @type
       self.each_tuple do |row|
-        if ::ActiveRecord::VERSION::MAJOR < 4
-          model = klass.send(:instantiate,row)
-        else
-          @column_types ||= column_types
-          model = klass.send(:instantiate, row, @column_types)
-        end
+        model = klass.send(:instantiate,row)
         block.call(model)
       end
     end
