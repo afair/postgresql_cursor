@@ -1,4 +1,4 @@
-#PostgreSQLCursor for handling large Result Sets
+# PostgreSQLCursor for handling large Result Sets
 
 [![Gem Version](https://badge.fury.io/rb/postgresql_cursor.svg)](http://badge.fury.io/rb/postgresql_cursor)
 
@@ -18,7 +18,7 @@ v5.0) and Ruby 1.9 and higher. Not all features work in ActiveRecord v3.1.
 Support for this gem will only be for officially supported versions of
 ActiveRecord and Ruby; others can try older versions of the gem.
 
-##Using Cursors
+## Using Cursors
 
 PostgreSQLCursor was developed to take advantage of PostgreSQL's cursors. Cursors allow the program
 to declare a cursor to run a given query returning "chunks" of rows to the application program while
@@ -75,7 +75,7 @@ Notes:
 * Aliases each_hash and each_hash_by_sql are provided for each_row and each_row_by_sql
   if you prefer to express what types are being returned.
 
-###PostgreSQLCursor is an Enumerable
+### PostgreSQLCursor is an Enumerable
 
 If you do not pass in a block, the cursor is returned, which mixes in the Enumerable
 libary. With that, you can pass it around, or chain in the awesome enumerable things
@@ -87,7 +87,7 @@ Product.each_row.map {|r| r["id"].to_i } #=> [1, 2, 3, ...]
 Product.each_instance.map {|r| r.id }.each {|id| p id } #=> [1, 2, 3, ...]
 Product.each_instance.lazy.inject(0) {|sum,r| sum +  r.quantity } #=> 499500
 ```
-###Hashes vs. Instances
+### Hashes vs. Instances
 
 The each_row method returns the Hash of strings for speed (as this allows you to process a lot of rows).
 Hashes are returned with String values, and you must take care of any type conversion.
@@ -99,7 +99,7 @@ If you find you need the types cast for your attributes, consider using each_ins
 insead. ActiveRecord's read casting algorithm will only cast the values you need and
 has become more efficient over time.
 
-###Select and Pluck
+### Select and Pluck
 
 To limit the columns returned to just those you need, use `.select(:id, :name)`
 query method.
@@ -124,7 +124,7 @@ Product.pluck_rows(:id) #=> ["1", "2", ...]
 Product.pluck_instances(:id, :quantity) #=> [[1, 503], [2, 932], ...]
 ```
 
-###Associations and Eager Loading
+### Associations and Eager Loading
 
 ActiveRecord performs some magic when eager-loading associated row. It
 will usually not join the tables, and prefers to load the data in
@@ -134,7 +134,7 @@ This library hooks onto the `to_sql` feature of the query builder. As a
 result, it can't do the join if ActiveRecord decided not to join, nor
 can it construct the association objects eagerly.
 
-##Locking and Updating Each Row (FOR UPDATE Queries)
+## Locking and Updating Each Row (FOR UPDATE Queries)
 
 When you use the AREL `lock` method, a "FOR UPDATE" clause is added to
 the query. This causes the block of rows returned from each FETCH
@@ -160,7 +160,7 @@ processing of each row consumes a lot of time or resources, try a
 See the [PostgreSQL Select Documentation](https://www.postgresql.org/docs/current/static/sql-select.html)
 for more information and limitations when using "FOR UPDATE" locking.
 
-##Background: Why PostgreSQL Cursors?
+## Background: Why PostgreSQL Cursors?
 
 ActiveRecord is designed and optimized for web performance. In a web transaction, only a "page" of
 around 20 rows is returned to the user. When you do this
@@ -177,7 +177,7 @@ When there is a very large number of rows, this requires a lot more memory to ho
 does not return that memory after processing the array, and the causes your process to "bloat". If you
 don't have enough memory, it will cause an exception.
 
-###ActiveRecord.find_each and find_in_batches
+### ActiveRecord.find_each and find_in_batches
 
 To solve this problem, ActiveRecord gives us two alternative methods that work in "chunks" of your data:
 
@@ -211,11 +211,11 @@ with the psuedo-code:
     until rows.size < 100;
     CLOSE cursor_1;
 
-##Meta
-###Author
+## Meta
+### Author
 Allen Fair, [@allenfair](https://twitter.com/allenfair), [github://afair](https://github.com/afair)
 
-###Note on Patches/Pull Requests
+### Note on Patches/Pull Requests
 
 * Fork the project.
 * Make your feature addition or bug fix.
@@ -225,11 +225,11 @@ Allen Fair, [@allenfair](https://twitter.com/allenfair), [github://afair](https:
   (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
 * Send me a pull request. Bonus points for topic branches.
 
-###Code of Conduct
+### Code of Conduct
 
 This project adheres to the [Open Code of Conduct](http://todogroup.org/opencodeofconduct/#postgresql_cursor/2016@allenfair.com).
 By participating, you are expected to honor this code.
 
-###Copyright
+### Copyright
 
 Copyright (c) 2010-2017 Allen Fair. See (MIT) LICENSE for details.
