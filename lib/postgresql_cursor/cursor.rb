@@ -1,3 +1,5 @@
+require 'active_record/associations/preloader'
+
 ################################################################################
 # PostgreSQLCursor: library class provides postgresql cursor for large result
 # set processing. Requires ActiveRecord, but can be adapted to other DBI/ORM libraries.
@@ -96,14 +98,28 @@ module PostgreSQLCursor
 
     def each_instance(klass=nil, &block)
       klass ||= @type
-      self.each_tuple do |row|
-        if ::ActiveRecord::VERSION::MAJOR < 4
-          model = klass.send(:instantiate,row)
-        else
-          @column_types ||= column_types
-          model = klass.send(:instantiate, row, @column_types)
+      block_size ||= @block_size ||= @options.fetch(:block_size) { 1000 }
+
+      preloads = klass.preload_values | klass.includes_values
+      preloader = ::ActiveRecord::Associations::Preloader.new
+
+      self.to_enum(:each_tuple).each_slice(block_size) do |slice|
+        records = slice.map do |row|
+          if ::ActiveRecord::VERSION::MAJOR < 4
+            klass.send(:instantiate, row)
+          else
+            @column_types ||= column_types
+            klass.send(:instantiate, row, @column_types)
+          end
         end
-        block.call(model)
+
+        preloads.each do |associations|
+          preloader.preload(records, associations)
+        end
+
+        records.each do |record|
+          block.call(record)
+        end
       end
     end
 
