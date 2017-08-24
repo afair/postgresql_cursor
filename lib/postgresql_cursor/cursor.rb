@@ -20,6 +20,8 @@ require 'active_record/associations/preloader'
 #   ActiveRecordModel.each_instance_by_sql("select ...") { |model| ... }
 #
 module PostgreSQLCursor
+  DEFAULT_BLOCK_SIZE = 1000
+
   class Cursor
     include Enumerable
     attr_reader :sql, :options, :connection, :count, :result
@@ -45,6 +47,10 @@ module PostgreSQLCursor
       @connection = @options.fetch(:connection) { ::ActiveRecord::Base.connection }
       @count      = 0
       @iterate    = options[:instances] ? :each_instance : :each_row
+    end
+
+    def default_block_size
+      @block_size ||= @options.fetch(:block_size) { DEFAULT_BLOCK_SIZE }
     end
 
     # Specify the type to instantiate, or reset to return a Hash
@@ -98,12 +104,11 @@ module PostgreSQLCursor
 
     def each_instance(klass=nil, &block)
       klass ||= @type
-      block_size ||= @block_size ||= @options.fetch(:block_size) { 1000 }
 
       preloads = klass.preload_values | klass.includes_values
       preloader = ::ActiveRecord::Associations::Preloader.new
 
-      self.to_enum(:each_tuple).each_slice(block_size) do |slice|
+      self.to_enum(:each_tuple).each_slice(default_block_size) do |slice|
         records = slice.map do |row|
           if ::ActiveRecord::VERSION::MAJOR < 4
             klass.send(:instantiate, row)
@@ -211,8 +216,7 @@ module PostgreSQLCursor
     end
 
     # Private: Fetches the next block of rows into @block
-    def fetch_block(block_size=nil)
-      block_size ||= @block_size ||= @options.fetch(:block_size) { 1000 }
+    def fetch_block(block_size=default_block_size)
       @result = @connection.execute("fetch #{block_size} from cursor_#{@cursor}")
 
       if @iterate == :each_array
