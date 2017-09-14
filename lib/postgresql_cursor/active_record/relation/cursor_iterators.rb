@@ -42,6 +42,47 @@ module PostgreSQLCursor
           cursor.iterate_type(self)
         end
 
+        # Public: Executes the query, yielding each batch of up to block_size
+        # rows where each row is a hash to the given block.
+        #
+        # Parameters: same as each_row
+        #
+        # Example:
+        #   Post.where(user_id:123).each_row_batch do |batch|
+        #     Post.process_batch(batch)
+        #   end
+        #   Post.each_row_batch.map { |batch| Post.transform_batch(batch) }
+        #
+        # Returns the number of rows yielded to the block
+        def each_row_batch(options={}, &block)
+          options = {:connection => self.connection}.merge(options)
+          cursor  = PostgreSQLCursor::Cursor.new(to_unprepared_sql, options)
+          return cursor.each_row_batch(&block) if block_given?
+          cursor.iterate_batched
+        end
+        alias :each_hash_batch :each_row_batch
+
+        # Public: Like each_row, but yields an array of instantiated model
+        # objects to the block
+        #
+        # Parameters: same as each_row
+        #
+        # Example:
+        #   Post.where(user_id:123).each_instance_batch do |batch|
+        #     Post.process_batch(batch)
+        #   end
+        #   Post.where(user_id:123).each_instance_batch.map do |batch|
+        #     Post.transform_batch(batch)
+        #   end
+        #
+        # Returns the number of rows yielded to the block
+        def each_instance_batch(options={}, &block)
+          options = {:connection => self.connection}.merge(options)
+          cursor = PostgreSQLCursor::Cursor.new(to_unprepared_sql, options)
+          return cursor.each_instance_batch(self, &block) if block_given?
+          cursor.iterate_type(self).iterate_batched
+        end
+
         # Plucks the column names from the rows, and return them in an array
         def pluck_rows(*cols)
           options = cols.last.is_a?(Hash) ? cols.pop : {}
