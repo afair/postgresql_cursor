@@ -30,12 +30,12 @@ class TestPostgresqlCursor < Minitest::Test
 
   def test_each_while_until
     c = PostgreSQLCursor::Cursor.new("select * from products order by 1", until:true)
-    n = c.each { |r| r[:id].to_i > 100 }
-    assert_equal 1000, n
+    n = c.each { |r| r['id'].to_i > 100 }
+    assert_equal 101, n
 
     c = PostgreSQLCursor::Cursor.new("select * from products order by 1", while:true)
-    n = c.each { |r| r[:id].to_i < 100 }
-    assert_equal 1000, n
+    n = c.each { |r| r['id'].to_i < 100 }
+    assert_equal 100, n
   end
 
   def test_each_batch_while_until
