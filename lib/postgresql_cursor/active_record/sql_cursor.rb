@@ -148,7 +148,7 @@ module PostgreSQLCursor
         cursor.iterate_type(self).iterate_batched
       end
 
-      # Returns and array of the given column names. Use if you need cursors and don't expect
+      # Returns an array of the given column names. Use if you need cursors and don't expect
       # this to comsume too much memory. Values are strings. Like ActiveRecord's pluck.
       def pluck_rows(*cols)
         options = cols.last.is_a?(Hash) ? cols.pop : {}
@@ -156,7 +156,7 @@ module PostgreSQLCursor
       end
       alias :pluck_row :pluck_rows
 
-      # Returns and array of the given column names. Use if you need cursors and don't expect
+      # Returns an array of the given column names. Use if you need cursors and don't expect
       # this to comsume too much memory. Values are instance types. Like ActiveRecord's pluck.
       def pluck_instances(*cols)
         options = cols.last.is_a?(Hash) ? cols.pop : {}
