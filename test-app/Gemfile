@@ -1,7 +1,7 @@
 # A sample Gemfile
 source "https://rubygems.org"
 
-gem 'activerecord', '~> 3.1.0'
+gem 'activerecord', '~> 5.2.0'
 #gem 'activerecord', '~> 3.2.0'
 #gem 'activerecord', '~> 4.0.0'
 #gem 'activerecord', '~> 4.1.0'
@@ -12,4 +12,4 @@ gem 'activerecord', '~> 3.1.0'
 #gem 'arel', github: 'rails/arel', branch: 'master'
 
 gem 'pg'
-gem 'postgresql_cursor', path:"#{ENV['HOME']}/src/postgresql_cursor"
+gem 'postgresql_cursor', path:"../"
