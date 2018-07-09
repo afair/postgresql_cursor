@@ -74,7 +74,81 @@ module PostgreSQLCursor
         cursor.iterate_type(self)
       end
 
-      # Returns and array of the given column names. Use if you need cursors and don't expect
+      # Public: Executes the query, yielding an array of up to block_size rows
+      # where each row is a hash to the given block.
+      #
+      # Parameters: same as each_row
+      #
+      # Example:
+      #   Post.each_row_batch { |batch| Post.process_batch(batch) }
+      #
+      # Returns the number of rows yielded to the block
+      def each_row_batch(options={}, &block)
+        options = {:connection => self.connection}.merge(options)
+        all.each_row_batch(options, &block)
+      end
+      alias :each_hash_batch :each_row_batch
+
+      # Public: Like each_row_batch, but yields an array of instantiated model
+      # objects to the block
+      #
+      # Parameters: same as each_row
+      #
+      # Example:
+      #   Post.each_instance_batch { |batch| Post.process_batch(batch) }
+      #
+      # Returns the number of rows yielded to the block
+      def each_instance_batch(options={}, &block)
+        options = {:connection => self.connection}.merge(options)
+        all.each_instance_batch(options, &block)
+      end
+
+      # Public: Yields each batch of up to block_size rows as an array of rows
+      # where each row as a hash to the given block
+      #
+      # Parameters: see each_row_by_sql
+      #
+      # Example:
+      #   Post.each_row_batch_by_sql("select * from posts") do |batch|
+      #     Post.process_batch(batch)
+      #   end
+      #   Post.each_row_batch_by_sql("select * from posts").map do |batch|
+      #     Post.transform_batch(batch)
+      #   end
+      #
+      # Returns the number of rows yielded to the block
+      def each_row_batch_by_sql(sql, options={}, &block)
+        options = {:connection => self.connection}.merge(options)
+        cursor  = PostgreSQLCursor::Cursor.new(sql, options)
+        return cursor.each_row_batch(&block) if block_given?
+        cursor.iterate_batched
+      end
+      alias :each_hash_batch_by_sql :each_row_batch_by_sql
+
+      # Public: Yields each batch up to block_size of rows as model instances
+      # to the given block
+      #
+      # As this instantiates a model object, it is slower than each_row_batch_by_sql
+      #
+      # Paramaters: see each_row_by_sql
+      #
+      # Example:
+      #   Post.each_instance_batch_by_sql("select * from posts") do |batch|
+      #     Post.process_batch(batch)
+      #   end
+      #   Post.each_instance_batch_by_sql("select * from posts").map do |batch|
+      #     Post.transform_batch(batch)
+      #   end
+      #
+      # Returns the number of rows yielded to the block
+      def each_instance_batch_by_sql(sql, options={}, &block)
+        options = {:connection => self.connection}.merge(options)
+        cursor  = PostgreSQLCursor::Cursor.new(sql, options)
+        return cursor.each_instance_batch(self, &block) if block_given?
+        cursor.iterate_type(self).iterate_batched
+      end
+
+      # Returns an array of the given column names. Use if you need cursors and don't expect
       # this to comsume too much memory. Values are strings. Like ActiveRecord's pluck.
       def pluck_rows(*cols)
         options = cols.last.is_a?(Hash) ? cols.pop : {}
@@ -82,7 +156,7 @@ module PostgreSQLCursor
       end
       alias :pluck_row :pluck_rows
 
-      # Returns and array of the given column names. Use if you need cursors and don't expect
+      # Returns an array of the given column names. Use if you need cursors and don't expect
       # this to comsume too much memory. Values are instance types. Like ActiveRecord's pluck.
       def pluck_instances(*cols)
         options = cols.last.is_a?(Hash) ? cols.pop : {}
