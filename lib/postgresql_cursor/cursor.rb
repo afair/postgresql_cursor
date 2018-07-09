@@ -1,4 +1,5 @@
 require 'active_record/associations/preloader'
+require 'active_record/connection_adapters/postgresql/oid'
 
 ################################################################################
 # PostgreSQLCursor: library class provides postgresql cursor for large result
@@ -19,6 +20,14 @@ require 'active_record/associations/preloader'
 #   ActiveRecordModel.each_row_by_sql("select ...") { |hash| ... }
 #   ActiveRecordModel.each_instance_by_sql("select ...") { |model| ... }
 #
+
+
+if ::ActiveRecord::VERSION::MAJOR <= 4
+  OID = ActiveRecord::ConnectionAdapters::PostgreSQLAdapter::OID
+else
+  OID = ActiveRecord::ConnectionAdapters::PostgreSQL::OID
+end
+
 module PostgreSQLCursor
   DEFAULT_BLOCK_SIZE = 1000
 
@@ -47,6 +56,7 @@ module PostgreSQLCursor
       @connection = @options.fetch(:connection) { ::ActiveRecord::Base.connection }
       @count      = 0
       @iterate    = options[:instances] ? :each_instance : :each_row
+      @batched    = false
     end
 
     def default_block_size
@@ -66,6 +76,11 @@ module PostgreSQLCursor
       self
     end
 
+    def iterate_batched(batched=true)
+      @batched = batched
+      self
+    end
+
     # Public: Yields each row of the result set to the passed block
     #
     # Yields the row to the block. The row is a hash with symbolized keys.
@@ -74,11 +89,11 @@ module PostgreSQLCursor
     # Returns the count of rows processed
     def each(&block)
       if @iterate == :each_row
-        self.each_row(&block)
+        @batched ? self.each_row_batch(&block) : self.each_row(&block)
       elsif @iterate == :each_array
-        self.each_array(&block)
+        @batched ? self.each_array_batch(&block) : self.each_array(&block)
       else
-        self.each_instance(@type, &block)
+        @batched ? self.each_instance_batch(@type, &block) : self.each_instance(@type, &block)
       end
     end
 
@@ -128,6 +143,41 @@ module PostgreSQLCursor
       end
     end
 
+    def each_row_batch(&block)
+      self.each_batch do |batch|
+        batch.map!(&:symbolize_keys) if @options[:symbolize_keys]
+        block.call(batch)
+      end
+    end
+
+    def each_array_batch(&block)
+      old_iterate = @iterate
+      @iterate = :each_array
+      begin
+        rv = self.each_batch do |batch|
+          block.call(batch)
+        end
+      ensure
+        @iterate = old_iterate
+      end
+      rv
+    end
+
+    def each_instance_batch(klass=nil, &block)
+      klass ||= @type
+      self.each_batch do |batch|
+        models = batch.map do |row|
+          if ::ActiveRecord::VERSION::MAJOR < 4
+            model = klass.send(:instantiate, row)
+          else
+            @column_types ||= column_types
+            model = klass.send(:instantiate, row, @column_types)
+          end
+        end
+        block.call(models)
+      end
+    end
+
     # Returns an array of columns plucked from the result rows.
     # Experimental function, as this could still use too much memory
     # and negate the purpose of this libarary.
@@ -166,6 +216,28 @@ module PostgreSQLCursor
           end
         rescue Exception => e
           raise e
+        ensure
+          close if @block
+        end
+      end
+      @count
+    end
+
+    def each_batch(&block) #:nodoc:
+      has_do_until = @options.key?(:until)
+      has_do_while = @options.key?(:while)
+      @count = 0
+      @column_types = nil
+      with_optional_transaction do
+        begin
+          open
+          while (batch = fetch_block)
+            break if batch.empty?
+            @count += 1
+            rc = block.call(batch)
+            break if has_do_until && rc == @options[:until]
+            break if has_do_while && rc != @options[:while]
+          end
         ensure
           close if @block
         end

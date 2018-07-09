@@ -201,7 +201,7 @@ There are drawbacks with these methods:
 ### How it works
 
 Under the covers, the library calls the PostgreSQL cursor operations
-with the psuedo-code:
+with the pseudo-code:
 
     SET cursor_tuple_fraction TO 1.0;
     DECLARE cursor_1 CURSOR WITH HOLD FOR select * from widgets;
