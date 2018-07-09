@@ -157,7 +157,7 @@ class TestPostgresqlCursor < Minitest::Test
     assert_equal 1000, r.size
     r = Product.all.pluck_instances(:id)
     assert_equal 1000, r.size
-    assert_equal Fixnum, r.first.class
+    assert_equal Integer, r.first.class
   end
 
   def test_with_hold
