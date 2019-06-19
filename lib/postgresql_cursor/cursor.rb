@@ -240,7 +240,7 @@ module PostgreSQLCursor
         fmod  = @result.fmod i
         types[fname] = @connection.get_type_map.fetch(ftype, fmod) { |oid, mod|
           warn "unknown OID: #{fname}(#{oid}) (#{sql})"
-          OID::Identity.new
+          ::ActiveRecord::Type::Value.new
         }
       end
 
