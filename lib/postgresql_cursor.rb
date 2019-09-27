@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'postgresql_cursor/version'
 
 ActiveSupport.on_load :active_record do

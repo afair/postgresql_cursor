@@ -1,33 +1,33 @@
 PATH
   remote: .
   specs:
-    postgresql_cursor (0.6.2)
+    postgresql_cursor (0.6.3)
       activerecord (>= 3.1.0)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    activemodel (5.2.1)
-      activesupport (= 5.2.1)
-    activerecord (5.2.1)
-      activemodel (= 5.2.1)
-      activesupport (= 5.2.1)
-      arel (>= 9.0)
-    activesupport (5.2.1)
+    activemodel (6.0.0)
+      activesupport (= 6.0.0)
+    activerecord (6.0.0)
+      activemodel (= 6.0.0)
+      activesupport (= 6.0.0)
+    activesupport (6.0.0)
       concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (>= 0.7, < 2)
       minitest (~> 5.1)
       tzinfo (~> 1.1)
-    arel (9.0.0)
-    concurrent-ruby (1.0.5)
-    i18n (1.1.0)
+      zeitwerk (~> 2.1, >= 2.1.8)
+    concurrent-ruby (1.1.5)
+    i18n (1.6.0)
       concurrent-ruby (~> 1.0)
-    minitest (5.11.3)
-    pg (1.0.0)
-    rake (12.3.1)
+    minitest (5.12.0)
+    pg (1.1.4)
+    rake (13.0.0)
     thread_safe (0.3.6)
     tzinfo (1.2.5)
       thread_safe (~> 0.1)
+    zeitwerk (2.1.10)
 
 PLATFORMS
   ruby
@@ -39,4 +39,4 @@ DEPENDENCIES
   rake
 
 BUNDLED WITH
-   1.16.3
+   1.17.3

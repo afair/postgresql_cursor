@@ -67,6 +67,7 @@ All these methods take an options hash to control things more:
                       This library uses 1.0 (Optimize for 100% of the result set)
                       Do not override this value unless you understand it.
     with_hold:boolean Keep the cursor "open" even after a commit.
+    cursor_name:string Give your cursor a name.
 
 Notes:
 

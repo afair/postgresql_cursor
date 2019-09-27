@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Defines extension to ActiveRecord/AREL to use this library
 module PostgreSQLCursor
   module ActiveRecord
@@ -12,6 +14,7 @@ module PostgreSQLCursor
         #   block_size: 1..n      - The number of rows to fetch per db block fetch
         #   while: value          - Exits loop when block does not return this value.
         #   until: value          - Exits loop when block returns this value.
+        #   cursor_name: string   - Allows you to name your cursor.
         #
         # Example:
         #   Post.where(user_id:123).each_row { |hash| Post.process(hash) }
