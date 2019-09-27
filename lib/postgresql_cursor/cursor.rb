@@ -248,9 +248,9 @@ module PostgreSQLCursor
     # Public: Opens (actually, "declares") the cursor. Call this before fetching
     def open
       set_cursor_tuple_fraction
-      @cursor = @options[:cursor_name] || SecureRandom.uuid.gsub("-","")
+      @cursor = @options[:cursor_name] || ("cursor_" + SecureRandom.uuid.gsub("-",""))
       hold = @options[:with_hold] ? 'with hold ' : ''
-      @result = @connection.execute("declare cursor_#{@cursor} no scroll cursor #{hold}for #{@sql}")
+      @result = @connection.execute("declare #{@cursor} no scroll cursor #{hold}for #{@sql}")
       @block = []
     end
 
@@ -268,7 +268,7 @@ module PostgreSQLCursor
     # Private: Fetches the next block of rows into @block
     def fetch_block(block_size=nil)
       block_size ||= @block_size ||= @options.fetch(:block_size) { 1000 }
-      @result = @connection.execute("fetch #{block_size} from cursor_#{@cursor}")
+      @result = @connection.execute("fetch #{block_size} from #{@cursor}")
 
       if @iterate == :each_array
         @block = @result.each_row.collect {|row| row }
@@ -279,7 +279,7 @@ module PostgreSQLCursor
 
     # Public: Closes the cursor
     def close
-      @connection.execute("close cursor_#{@cursor}")
+      @connection.execute("close #{@cursor}")
     end
 
     # Private: Open transaction unless with_hold option, specified
