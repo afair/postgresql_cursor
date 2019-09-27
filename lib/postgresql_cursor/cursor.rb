@@ -1,5 +1,3 @@
-require 'active_record/connection_adapters/postgresql/oid'
-
 ################################################################################
 # PostgreSQLCursor: library class provides postgresql cursor for large result
 # set processing. Requires ActiveRecord, but can be adapted to other DBI/ORM libraries.
@@ -19,13 +17,6 @@ require 'active_record/connection_adapters/postgresql/oid'
 #   ActiveRecordModel.each_row_by_sql("select ...") { |hash| ... }
 #   ActiveRecordModel.each_instance_by_sql("select ...") { |model| ... }
 #
-
-
-if ::ActiveRecord::VERSION::MAJOR <= 4
-  OID = ActiveRecord::ConnectionAdapters::PostgreSQLAdapter::OID
-else
-  OID = ActiveRecord::ConnectionAdapters::PostgreSQL::OID
-end
 
 module PostgreSQLCursor
   class Cursor
@@ -240,7 +231,11 @@ module PostgreSQLCursor
         fmod  = @result.fmod i
         types[fname] = @connection.get_type_map.fetch(ftype, fmod) { |oid, mod|
           warn "unknown OID: #{fname}(#{oid}) (#{sql})"
-          ::ActiveRecord::Type::Value.new
+          if ::ActiveRecord::VERSION::MAJOR <= 4
+            ActiveRecord::ConnectionAdapters::PostgreSQLAdapter::OID::Identity.new
+          else
+            ActiveRecord::ConnectionAdapters::PostgreSQL::OID::Identity.new
+          end
         }
       end
 
