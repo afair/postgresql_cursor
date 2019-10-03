@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    postgresql_cursor (0.6.3)
+    postgresql_cursor (0.6.4)
       activerecord (>= 3.1.0)
 
 GEM
