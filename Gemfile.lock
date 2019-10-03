@@ -21,6 +21,7 @@ GEM
     concurrent-ruby (1.1.5)
     i18n (1.6.0)
       concurrent-ruby (~> 1.0)
+    irb (1.0.0)
     minitest (5.12.0)
     pg (1.1.4)
     rake (13.0.0)
@@ -33,6 +34,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  irb
   minitest
   pg
   postgresql_cursor!

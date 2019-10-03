@@ -1,32 +1,44 @@
-# coding: utf-8
-lib = File.expand_path('../lib', __FILE__)
+# frozen_string_literal: true
+
+lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'postgresql_cursor/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "postgresql_cursor"
+  spec.name          = 'postgresql_cursor'
   spec.version       = PostgresqlCursor::VERSION
-  spec.authors       = ["Allen Fair"]
-  spec.email         = ["allen.fair@gmail.com"]
-  spec.summary       = "ActiveRecord PostgreSQL Adapter extension for using a cursor to return a large result set"
-  spec.description   = "PostgreSQL Cursor is an extension to the ActiveRecord PostgreSQLAdapter for very large result sets. It provides a cursor open/fetch/close interface to access data without loading all rows into memory, and instead loads the result rows in \"chunks\" (default of 1_000 rows), buffers them, and returns the rows one at a time."
-  spec.homepage      = "http://github.com/afair/postgresql_cursor"
-  spec.license       = "MIT"
+  spec.authors       = ['Allen Fair']
+  spec.email         = ['allen.fair@gmail.com']
+  spec.summary       = <<-SUMMARY
+  ActiveRecord PostgreSQL Adapter extension for using a cursor to return a
+  large result set
+  SUMMARY
+  spec.description = <<-DESCRIPTION
+  PostgreSQL Cursor is an extension to the ActiveRecord PostgreSQLAdapter for
+  very large result sets.  It provides a cursor open/fetch/close interface to
+  access data without loading all rows into memory, and instead loads the result
+  rows in 'chunks' (default of 1_000 rows), buffers them, and returns the rows
+  one at a time.
+  DESCRIPTION
+  spec.homepage      = 'http://github.com/afair/postgresql_cursor'
+  spec.license       = 'MIT'
 
   spec.files         = `git ls-files -z`.split("\x0")
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
-  spec.require_paths = ["lib"]
+  spec.require_paths = ['lib']
 
-  #spec.add_dependency "pg" # Remove this for jruby, which should specify 'activerecord-jdbcpostgresql-adapter'
-  spec.add_dependency "activerecord", ">= 3.1.0"
-  #spec.add_dependency "activerecord", "~> 3.1.0"
-  # Tests don't run on 4.0.0 since AR/AS have an older version of minitest as a run-time dependency(!) than our tests support
-  #spec.add_dependency "activerecord", "~> 4.0.0";# spec.add_dependency "minitest", "~> 4.2.0"
-  #spec.add_dependency "activerecord", "~> 4.1.0"
-  #spec.add_dependency "activerecord", "~> 5.0.0.beta2"
+  # Remove this for jruby which should use 'activerecord-jdbcpostgresql-adapter'
+  # spec.add_dependency 'pg'
 
-  spec.add_development_dependency "pg"
-  spec.add_development_dependency "rake"
-  spec.add_development_dependency "minitest"
+  spec.add_dependency 'activerecord', '>= 3.1.0'
+  # spec.add_dependency 'activerecord', '~> 3.1.0'
+  # spec.add_dependency 'activerecord', '~> 4.1.0'
+  # spec.add_dependency 'activerecord', '~> 5.0.0'
+  # spec.add_dependency 'activerecord', '~> 6.0.0'
+
+  spec.add_development_dependency 'irb'
+  spec.add_development_dependency 'minitest'
+  spec.add_development_dependency 'pg'
+  spec.add_development_dependency 'rake'
 end
