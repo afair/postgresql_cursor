@@ -303,4 +303,6 @@ module PostgreSQLCursor
       frac
     end
   end
+
+  ActiveSupport.run_load_hooks(PostgreSQLCursor.name.underscore.to_sym, self)
 end

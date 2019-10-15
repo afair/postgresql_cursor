@@ -191,4 +191,10 @@ class TestPostgresqlCursor < Minitest::Test
       assert_match(/bad_table/, e.message)
     end
   end
+
+  def test_on_load_hook
+    i = 0
+    ActiveSupport.on_load(:postgre_sql_cursor) { i += 1 }
+    assert_equal(1, i, "The loading hook didn't run")
+  end
 end

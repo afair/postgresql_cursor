@@ -23,3 +23,5 @@ pkg
 
 ## PROJECT::SPECIFIC
 Gemfile.lock
+*.iml
+.idea/
