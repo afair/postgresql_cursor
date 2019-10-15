@@ -1,0 +1,14 @@
+language: ruby
+rvm:
+  - 2.6.5
+gemfile:
+  - gemfiles/activerecord_4.gemfile
+  - gemfiles/activerecord_5.gemfile
+  - gemfiles/activerecord_6.gemfile
+services:
+  - postgresql
+before_script:
+  - psql -c 'create database postgresql_cursor_test;' -U postgres
+  - psql -c 'create table products ( id serial primary key, data varchar);' -U postgres -d postgresql_cursor_test
+addons:
+  postgresql: '9.6'
