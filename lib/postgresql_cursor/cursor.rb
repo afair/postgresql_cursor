@@ -107,12 +107,7 @@ module PostgreSQLCursor
     def each_instance(klass=nil, &block)
       klass ||= @type
       self.each_tuple do |row|
-        if ::ActiveRecord::VERSION::MAJOR < 4
-          model = klass.send(:instantiate,row)
-        else
-          @column_types ||= column_types
-          model = klass.send(:instantiate, row, @column_types)
-        end
+        klass.send(:instantiate, row)
         block.call(model)
       end
     end
@@ -141,12 +136,7 @@ module PostgreSQLCursor
       klass ||= @type
       self.each_batch do |batch|
         models = batch.map do |row|
-          if ::ActiveRecord::VERSION::MAJOR < 4
-            model = klass.send(:instantiate, row)
-          else
-            @column_types ||= column_types
-            model = klass.send(:instantiate, row, @column_types)
-          end
+          klass.send(:instantiate, row)
         end
         block.call(models)
       end
