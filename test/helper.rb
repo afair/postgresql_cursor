@@ -10,12 +10,18 @@ ActiveRecord::Base.establish_connection(adapter: 'postgresql',
   username: ENV['TEST_USER']     || ENV['USER'] || 'postgresql_cursor')
 
 class Product < ActiveRecord::Base
+  has_many :prices
+
   # create table records (id serial primary key);
   def self.generate(max=1_000)
     max.times do |i|
       connection.execute("insert into products values (#{i+1})")
     end
   end
+end
+
+class Price < ActiveRecord::Base
+  belongs_to :product
 end
 
 Product.destroy_all

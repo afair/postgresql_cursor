@@ -191,4 +191,9 @@ class TestPostgresqlCursor < Minitest::Test
       assert_match(/bad_table/, e.message)
     end
   end
+
+  def test_relation_association_is_not_loaded
+    cursor = Product.first.prices.each_instance
+    refute cursor.instance_variable_get(:@type).loaded?
+  end
 end

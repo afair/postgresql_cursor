@@ -50,11 +50,14 @@ module PostgreSQLCursor
       @batched    = false
     end
 
-    # Specify the type to instantiate, or reset to return a Hash
+    # Specify the type to instantiate, or reset to return a Hash.
+    #
+    # Explicitly check for type class to prevent calling equality
+    # operator on active record relation, which will load it.
     def iterate_type(type=nil)
-      if type.nil? || type == Hash
+      if type.nil? || (type.class == Class && type == Hash)
         @iterate = :each_row
-      elsif type == Array
+      elsif type.class == Class && type == Array
         @iterate = :each_array
       else
         @iterate = :each_instance
