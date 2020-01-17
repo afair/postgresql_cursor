@@ -1,7 +1,7 @@
 # PostgreSQLCursor for handling large Result Sets
 
 [![Gem Version](https://badge.fury.io/rb/postgresql_cursor.svg)](http://badge.fury.io/rb/postgresql_cursor)
-[![Build Status](https://travis-ci.org/fgarces/postgresql_cursor.svg?branch=master)](https://travis-ci.org/fgarces/postgresql_cursor)
+[![Build Status](https://travis-ci.org/fgarces/postgresql_cursor.svg?branch=master)](https://travis-ci.org/afair/postgresql_cursor)
 
 PostgreSQLCursor extends ActiveRecord to allow for efficient processing of queries
 returning a large number of rows, and allows you to sort your result set.
