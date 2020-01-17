@@ -15,6 +15,7 @@ tmtags
 
 ## IntelliJ/Rubymine
 .idea
+*.iml
 
 ## PROJECT::GENERAL
 coverage
