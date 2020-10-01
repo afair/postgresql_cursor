@@ -1,6 +1,7 @@
 language: ruby
 rvm:
   - 2.6.5
+  - 2.7.1
 before_install:
   - sudo apt-get update
   - sudo apt-get --yes remove postgresql\*
@@ -11,6 +12,10 @@ gemfile:
   - gemfiles/activerecord_4.gemfile
   - gemfiles/activerecord_5.gemfile
   - gemfiles/activerecord_6.gemfile
+matrix:
+  exclude:
+    - rvm: 2.7.1
+      gemfile: gemfiles/activerecord_4.gemfile
 services:
   - postgresql
 before_script:
@@ -19,4 +24,4 @@ before_script:
   - psql -c 'create table products ( id serial primary key, data varchar);' -U postgres -d postgresql_cursor_test
   - psql -c 'create table prices ( id serial primary key, data varchar, product_id integer);' -U postgres -d postgresql_cursor_test
 addons:
-  postgresql: '12.1'
+  postgresql: '12.3'
