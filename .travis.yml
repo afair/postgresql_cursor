@@ -13,7 +13,7 @@ gemfile:
   - gemfiles/activerecord_5.gemfile
   - gemfiles/activerecord_6.gemfile
 matrix:
-  include:
+  exclude:
     - rvm: 2.7.1
       gemfile: gemfiles/activerecord_4.gemfile
 services:
