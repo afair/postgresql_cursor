@@ -41,32 +41,32 @@ module PostgreSQLCursor
     #   PostgreSQLCursor::Cursor.new("select ....")
     #
     # Returns the cursor object when called with new.
-    def initialize(sql, options={})
-      @sql        = sql
-      @options    = options
+    def initialize(sql, options = {})
+      @sql = sql
+      @options = options
       @connection = @options.fetch(:connection) { ::ActiveRecord::Base.connection }
-      @count      = 0
-      @iterate    = options[:instances] ? :each_instance : :each_row
-      @batched    = false
+      @count = 0
+      @iterate = options[:instances] ? :each_instance : :each_row
+      @batched = false
     end
 
     # Specify the type to instantiate, or reset to return a Hash.
     #
     # Explicitly check for type class to prevent calling equality
     # operator on active record relation, which will load it.
-    def iterate_type(type=nil)
-      if type.nil? || (type.class == Class && type == Hash)
+    def iterate_type(type = nil)
+      if type.nil? || (type.instance_of?(Class) && type == Hash)
         @iterate = :each_row
-      elsif type.class == Class && type == Array
+      elsif type.instance_of?(Class) && type == Array
         @iterate = :each_array
       else
         @iterate = :each_instance
-        @type    = type
+        @type = type
       end
       self
     end
 
-    def iterate_batched(batched=true)
+    def iterate_batched(batched = true)
       @batched = batched
       self
     end
@@ -79,16 +79,16 @@ module PostgreSQLCursor
     # Returns the count of rows processed
     def each(&block)
       if @iterate == :each_row
-        @batched ? self.each_row_batch(&block) : self.each_row(&block)
+        @batched ? each_row_batch(&block) : each_row(&block)
       elsif @iterate == :each_array
-        @batched ? self.each_array_batch(&block) : self.each_array(&block)
+        @batched ? each_array_batch(&block) : each_array(&block)
       else
-        @batched ? self.each_instance_batch(@type, &block) : self.each_instance(@type, &block)
+        @batched ? each_instance_batch(@type, &block) : each_instance(@type, &block)
       end
     end
 
     def each_row(&block)
-      self.each_tuple do |row|
+      each_tuple do |row|
         row = row.symbolize_keys if @options[:symbolize_keys]
         block.call(row)
       end
@@ -98,7 +98,7 @@ module PostgreSQLCursor
       old_iterate = @iterate
       @iterate = :each_array
       begin
-        rv = self.each_tuple do |row|
+        rv = each_tuple do |row|
           block.call(row)
         end
       ensure
@@ -107,11 +107,11 @@ module PostgreSQLCursor
       rv
     end
 
-    def each_instance(klass=nil, &block)
+    def each_instance(klass = nil, &block)
       klass ||= @type
-      self.each_tuple do |row|
+      each_tuple do |row|
         if ::ActiveRecord::VERSION::MAJOR < 4
-          model = klass.send(:instantiate,row)
+          model = klass.send(:instantiate, row)
         else
           @column_types ||= column_types
           model = klass.send(:instantiate, row, @column_types)
@@ -121,7 +121,7 @@ module PostgreSQLCursor
     end
 
     def each_row_batch(&block)
-      self.each_batch do |batch|
+      each_batch do |batch|
         batch.map!(&:symbolize_keys) if @options[:symbolize_keys]
         block.call(batch)
       end
@@ -131,7 +131,7 @@ module PostgreSQLCursor
       old_iterate = @iterate
       @iterate = :each_array
       begin
-        rv = self.each_batch do |batch|
+        rv = each_batch do |batch|
           block.call(batch)
         end
       ensure
@@ -140,15 +140,15 @@ module PostgreSQLCursor
       rv
     end
 
-    def each_instance_batch(klass=nil, &block)
+    def each_instance_batch(klass = nil, &block)
       klass ||= @type
-      self.each_batch do |batch|
+      each_batch do |batch|
         models = batch.map do |row|
           if ::ActiveRecord::VERSION::MAJOR < 4
-            model = klass.send(:instantiate, row)
+            klass.send(:instantiate, row)
           else
             @column_types ||= column_types
-            model = klass.send(:instantiate, row, @column_types)
+            klass.send(:instantiate, row, @column_types)
           end
         end
         block.call(models)
@@ -163,11 +163,11 @@ module PostgreSQLCursor
       options = cols.last.is_a?(Hash) ? cols.pop : {}
       @options.merge!(options)
       @options[:symbolize_keys] = true
-      self.iterate_type(options[:class]) if options[:class]
-      cols    = cols.map {|c| c.to_sym }
-      result  = []
+      iterate_type(options[:class]) if options[:class]
+      cols = cols.map { |c| c.to_sym }
+      result = []
 
-      self.each() do |row|
+      each do |row|
         row = row.symbolize_keys if row.is_a?(Hash)
         result << cols.map { |c| row[c] }
       end
@@ -176,48 +176,44 @@ module PostgreSQLCursor
       result
     end
 
-    def each_tuple(&block) #:nodoc:
-      has_do_until  = @options.has_key?(:until)
-      has_do_while  = @options.has_key?(:while)
-      @count        = 0
+    def each_tuple(&block) # :nodoc:
+      has_do_until = @options.has_key?(:until)
+      has_do_while = @options.has_key?(:while)
+      @count = 0
       @column_types = nil
       with_optional_transaction do
-        begin
-          open
-          while (row = fetch) do
-            break if row.size==0
-            @count += 1
-            rc = block.call(row)
-            break if has_do_until && rc == @options[:until]
-            break if has_do_while && rc != @options[:while]
-          end
-        rescue Exception => e
-          raise e
-        ensure
-          close if @block && connection.active?
+        open
+        while (row = fetch)
+          break if row.size == 0
+          @count += 1
+          rc = block.call(row)
+          break if has_do_until && rc == @options[:until]
+          break if has_do_while && rc != @options[:while]
         end
+      rescue => e
+        raise e
+      ensure
+        close if @block && connection.active?
       end
       @count
     end
 
-    def each_batch(&block) #:nodoc:
+    def each_batch(&block) # :nodoc:
       has_do_until = @options.key?(:until)
       has_do_while = @options.key?(:while)
       @count = 0
       @column_types = nil
       with_optional_transaction do
-        begin
-          open
-          while (batch = fetch_block)
-            break if batch.empty?
-            @count += 1
-            rc = block.call(batch)
-            break if has_do_until && rc == @options[:until]
-            break if has_do_while && rc != @options[:while]
-          end
-        ensure
-          close if @block && connection.active?
+        open
+        while (batch = fetch_block)
+          break if batch.empty?
+          @count += 1
+          rc = block.call(batch)
+          break if has_do_until && rc == @options[:until]
+          break if has_do_while && rc != @options[:while]
         end
+      ensure
+        close if @block && connection.active?
       end
       @count
     end
@@ -234,7 +230,7 @@ module PostgreSQLCursor
       fields = @result.fields
       fields.each_with_index do |fname, i|
         ftype = @result.ftype i
-        fmod  = @result.fmod i
+        fmod = @result.fmod i
         types[fname] = @connection.get_type_map.fetch(ftype, fmod) do |oid, mod|
           warn "unknown OID: #{fname}(#{oid}) (#{sql})"
           if ::ActiveRecord::VERSION::MAJOR <= 4
@@ -251,8 +247,8 @@ module PostgreSQLCursor
     # Public: Opens (actually, "declares") the cursor. Call this before fetching
     def open
       set_cursor_tuple_fraction
-      @cursor = @options[:cursor_name] || ("cursor_" + SecureRandom.uuid.gsub("-",""))
-      hold = @options[:with_hold] ? 'with hold ' : ''
+      @cursor = @options[:cursor_name] || ("cursor_" + SecureRandom.uuid.delete("-"))
+      hold = @options[:with_hold] ? "with hold " : ""
       @result = @connection.execute("declare #{@cursor} no scroll cursor #{hold}for #{@sql}")
       @block = []
     end
@@ -260,23 +256,23 @@ module PostgreSQLCursor
     # Public: Returns the next row from the cursor, or empty hash if end of results
     #
     # Returns a row as a hash of {'colname'=>value,...}
-    def fetch(options={})
+    def fetch(options = {})
       open unless @block
-      fetch_block if @block.size==0
+      fetch_block if @block.size == 0
       row = @block.shift
       row = row.symbolize_keys if row && options[:symbolize_keys]
       row
     end
 
     # Private: Fetches the next block of rows into @block
-    def fetch_block(block_size=nil)
-      block_size ||= @block_size ||= @options.fetch(:block_size) { 1000 }
+    def fetch_block(block_size = nil)
+      block_size ||= @block_size ||= @options.fetch(:block_size, 1000)
       @result = @connection.execute("fetch #{block_size} from #{@cursor}")
 
-      if @iterate == :each_array
-        @block = @result.each_row.collect {|row| row }
+      @block = if @iterate == :each_array
+        @result.each_row.collect { |row| row }
       else
-        @block = @result.collect {|row| row }
+        @result.collect { |row| row }
       end
     end
 
@@ -298,8 +294,8 @@ module PostgreSQLCursor
     # This is a value between 0.1 and 1.0 (PostgreSQL defaults to 0.1, this library defaults to 1.0)
     # used to determine the expected fraction (percent) of result rows returned the the caller.
     # This value determines the access path by the query planner.
-    def set_cursor_tuple_fraction(frac=1.0)
-      @cursor_tuple_fraction ||= @options.fetch(:fraction) { 1.0 }
+    def set_cursor_tuple_fraction(frac = 1.0)
+      @cursor_tuple_fraction ||= @options.fetch(:fraction, 1.0)
       return @cursor_tuple_fraction if frac == @cursor_tuple_fraction
       @cursor_tuple_fraction = frac
       @result = @connection.execute("set cursor_tuple_fraction to  #{frac}")
