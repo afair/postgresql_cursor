@@ -130,6 +130,26 @@ class TestPostgresqlCursor < Minitest::Test
     assert_equal e.message, 'Oops'
   end
 
+  def test_exception_in_failed_transaction
+    begin
+      Product.each_row_by_sql("select * from products") do |r|
+        Product.connection.execute('select kaboom')
+      end
+    rescue Exception => e
+      assert_match(/kaboom/, e.message)
+    end
+  end
+
+  def test_batch_exception_in_failed_transaction
+    begin
+      Product.each_row_batch_by_sql("select * from products") do |r|
+        Product.connection.execute('select kaboom')
+      end
+    rescue Exception => e
+      assert_match(/kaboom/, e.message)
+    end
+  end
+
   def test_cursor
     cursor = Product.all.each_row
     assert cursor.respond_to?(:each)

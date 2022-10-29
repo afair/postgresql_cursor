@@ -194,7 +194,7 @@ module PostgreSQLCursor
         rescue Exception => e
           raise e
         ensure
-          close if @block
+          close if @block && connection.active?
         end
       end
       @count
@@ -216,7 +216,7 @@ module PostgreSQLCursor
             break if has_do_while && rc != @options[:while]
           end
         ensure
-          close if @block
+          close if @block && connection.active?
         end
       end
       @count
