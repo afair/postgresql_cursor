@@ -30,7 +30,7 @@ Gem::Specification.new do |spec|
   # Remove this for jruby which should use 'activerecord-jdbcpostgresql-adapter'
   # spec.add_dependency 'pg'
 
-  spec.add_dependency "activerecord", ">= 7.0.0"
+  spec.add_dependency "activerecord", ">= 3.1.0"
   # spec.add_dependency 'activerecord', '~> 3.1.0'
   # spec.add_dependency 'activerecord', '~> 4.1.0'
   # spec.add_dependency 'activerecord', '~> 5.0.0'
