@@ -231,8 +231,8 @@ module PostgreSQLCursor
       fields.each_with_index do |fname, i|
         ftype = @result.ftype i
         fmod = @result.fmod i
-        types[fname] = @connection.get_type_map.fetch(ftype, fmod) do |oid, mod|
-          warn "unknown OID: #{fname}(#{oid}) (#{sql})"
+        types[fname] = @connection.get_type_map.fetch(ftype.to_s, fmod) do |oid, mod|
+          # warn "unknown OID: #{fname}(#{oid}, #{mod}) (#{sql})"
           if ::ActiveRecord::VERSION::MAJOR <= 4
             ::ActiveRecord::ConnectionAdapters::PostgreSQLAdapter::OID::Identity.new
           else
