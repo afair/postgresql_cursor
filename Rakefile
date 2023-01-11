@@ -17,9 +17,7 @@ task :console do
   #IRB.start
 end
 
-desc "Setup testing database and table"
+desc "Setup testing database"
 task :setup do
   sh %q(createdb postgresql_cursor_test)
-  sh %Q<echo "create table products ( id serial primary key, data varchar);" | psql postgresql_cursor_test>
-  sh %Q<echo "create table prices ( id serial primary key, data varchar, product_id integer);" | psql postgresql_cursor_test>
 end
