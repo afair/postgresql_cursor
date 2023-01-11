@@ -24,3 +24,4 @@ pkg
 
 ## PROJECT::SPECIFIC
 Gemfile.lock
+gemfiles/*.gemfile.lock

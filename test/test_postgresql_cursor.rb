@@ -141,6 +141,7 @@ class TestPostgresqlCursor < Minitest::Test
     Product.each_row_batch_by_sql("select * from products") do |r|
       raise "Oops"
     end
+    flunk("Should have thrown an exception")
   rescue => e
     assert_equal e.message, "Oops"
   end
@@ -149,16 +150,18 @@ class TestPostgresqlCursor < Minitest::Test
     Product.each_row_by_sql("select * from products") do |r|
       Product.connection.execute("select kaboom")
     end
+    flunk("Should have thrown an exception")
   rescue => e
-    assert_match(/PG::InFailedSqlTransaction/, e.message)
+    assert_kind_of(PG::UndefinedColumn, root_cause(e))
   end
 
   def test_batch_exception_in_failed_transaction
     Product.each_row_batch_by_sql("select * from products") do |r|
       Product.connection.execute("select kaboom")
     end
+    flunk("Should have thrown an exception")
   rescue => e
-    assert_match(/PG::InFailedSqlTransaction/, e.message)
+    assert_kind_of(PG::UndefinedColumn, root_cause(e))
   end
 
   def test_cursor
@@ -224,5 +227,12 @@ class TestPostgresqlCursor < Minitest::Test
   def test_relation_association_is_not_loaded
     cursor = Product.first.prices.each_instance
     refute cursor.instance_variable_get(:@type).loaded?
+  end
+
+  def root_cause(e)
+    until e.cause.nil?
+      e = e.cause
+    end
+    e
   end
 end

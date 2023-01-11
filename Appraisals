@@ -1,12 +1,11 @@
-appraise "activerecord-4" do
-  gem "activerecord", "4.2.11.1"
-  gem "pg", "~> 0.15"
+appraise "activerecord-6-0" do
+  gem "activerecord", "6.0.6"
 end
 
-appraise "activerecord-5" do
-  gem "activerecord", "5.2.3"
+appraise "activerecord-6-1" do
+  gem "activerecord", "6.1.7"
 end
 
-appraise "activerecord-6" do
-  gem "activerecord", "6.0.0"
+appraise "activerecord-7-0" do
+  gem "activerecord", "7.0.4"
 end

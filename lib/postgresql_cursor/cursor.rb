@@ -110,12 +110,8 @@ module PostgreSQLCursor
     def each_instance(klass = nil, &block)
       klass ||= @type
       each_tuple do |row|
-        if ::ActiveRecord::VERSION::MAJOR < 4
-          model = klass.send(:instantiate, row)
-        else
-          @column_types ||= column_types
-          model = klass.send(:instantiate, row, @column_types)
-        end
+        @column_types ||= column_types
+        model = klass.send(:instantiate, row, @column_types)
         block.call(model)
       end
     end
@@ -144,12 +140,8 @@ module PostgreSQLCursor
       klass ||= @type
       each_batch do |batch|
         models = batch.map do |row|
-          if ::ActiveRecord::VERSION::MAJOR < 4
-            klass.send(:instantiate, row)
-          else
-            @column_types ||= column_types
-            klass.send(:instantiate, row, @column_types)
-          end
+          @column_types ||= column_types
+          klass.send(:instantiate, row, @column_types)
         end
         block.call(models)
       end
@@ -223,7 +215,6 @@ module PostgreSQLCursor
     end
 
     def column_types
-      return nil if ::ActiveRecord::VERSION::MAJOR < 4
       return @column_types if @column_types
 
       types = {}
@@ -233,11 +224,7 @@ module PostgreSQLCursor
         fmod = @result.fmod i
         types[fname] = @connection.get_type_map.fetch(ftype.to_s, fmod) do |oid, mod|
           # warn "unknown OID: #{fname}(#{oid}, #{mod}) (#{sql})"
-          if ::ActiveRecord::VERSION::MAJOR <= 4
-            ::ActiveRecord::ConnectionAdapters::PostgreSQLAdapter::OID::Identity.new
-          else
-            ::ActiveRecord::Type::Value.new
-          end
+          ::ActiveRecord::Type::Value.new
         end
       end
 

@@ -12,6 +12,6 @@ ActiveSupport.on_load :active_record do
   # ActiveRecord 4.x
   require 'active_record/connection_adapters/postgresql_adapter'
   ActiveRecord::Base.extend(PostgreSQLCursor::ActiveRecord::SqlCursor)
-  ActiveRecord::Relation.send(:include, PostgreSQLCursor::ActiveRecord::Relation::CursorIterators)
-  ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.send(:include, PostgreSQLCursor::ActiveRecord::ConnectionAdapters::PostgreSQLTypeMap)
+  ActiveRecord::Relation.include(PostgreSQLCursor::ActiveRecord::Relation::CursorIterators)
+  ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.include(PostgreSQLCursor::ActiveRecord::ConnectionAdapters::PostgreSQLTypeMap)
 end
