@@ -1,15 +1,8 @@
 # A sample Gemfile
 source "https://rubygems.org"
 
-gem 'activerecord', '~> 5.2.0'
-#gem 'activerecord', '~> 3.2.0'
-#gem 'activerecord', '~> 4.0.0'
-#gem 'activerecord', '~> 4.1.0'
-#gem 'activerecord', '4.1.2.rc1'
+gem "activerecord", "~> 7.0.4.1"
+# gem 'activerecord', '~> 6.1.7.1'
 
-# For testing against Edge Rails
-#gem 'activerecord', github: 'rails/rails', branch: 'master'
-#gem 'arel', github: 'rails/arel', branch: 'master'
-
-gem 'pg'
-gem 'postgresql_cursor', path:"../"
+gem "pg"
+gem "postgresql_cursor", path: "../"
