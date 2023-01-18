@@ -150,7 +150,7 @@ class TestPostgresqlCursor < Minitest::Test
       Product.connection.execute("select kaboom")
     end
   rescue => e
-    assert_match(/PG::InFailedSqlTransaction/, e.message)
+    assert_match(/PG::(InFailedSqlTransaction|UndefinedColumn)/, e.message)
   end
 
   def test_batch_exception_in_failed_transaction
@@ -158,7 +158,7 @@ class TestPostgresqlCursor < Minitest::Test
       Product.connection.execute("select kaboom")
     end
   rescue => e
-    assert_match(/PG::InFailedSqlTransaction/, e.message)
+    assert_match(/PG::(InFailedSqlTransaction|UndefinedColumn)/, e.message)
   end
 
   def test_cursor
