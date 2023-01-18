@@ -27,15 +27,14 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # Remove this for jruby which should use 'activerecord-jdbcpostgresql-adapter'
-  # spec.add_dependency 'pg'
+  spec.add_dependency "activerecord", ">= 6.0"
+  # spec.add_development_dependency "activerecord", "~> 6.1"
+  # spec.add_development_dependency "activerecord", "~> 7.0"
 
-  # spec.add_dependency "activerecord", "~> 6.0.0"
-  spec.add_dependency "activerecord", "~> 7.0.0"
-
+  # PG dependency held back for Jruby. See pg_jruby or jdbc-postgres-adapter gems.
+  spec.add_development_dependency "pg" unless RUBY_PLATFORM == "java"
   spec.add_development_dependency "irb"
   spec.add_development_dependency "minitest"
-  spec.add_development_dependency "pg" # or jruby-pg?
   spec.add_development_dependency "rake"
   spec.add_development_dependency "appraisal"
 end
