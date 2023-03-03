@@ -106,7 +106,7 @@ To limit the columns returned to just those you need, use `.select(:id, :name)`
 query method.
 
 ```ruby
-Product.select(:id, :name).each_row { |product| product.process }
+Product.select(:id, :name).each_instance { |product| product.process }
 ```
 
 Pluck is a great alternative instead of using a cursor. It does not instantiate
