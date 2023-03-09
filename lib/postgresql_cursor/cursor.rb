@@ -292,12 +292,9 @@ module PostgreSQLCursor
     # This is a value between 0.1 and 1.0 (PostgreSQL defaults to 0.1, this library defaults to 1.0)
     # used to determine the expected fraction (percent) of result rows returned the the caller.
     # This value determines the access path by the query planner.
-    def set_cursor_tuple_fraction(frac = 1.0)
-      @cursor_tuple_fraction ||= @options.fetch(:fraction, 1.0)
-      return @cursor_tuple_fraction if frac == @cursor_tuple_fraction
-      @cursor_tuple_fraction = frac
-      @result = @connection.execute("set cursor_tuple_fraction to  #{frac}")
-      frac
+    def set_cursor_tuple_fraction
+      frac = @options.fetch(:fraction, 1.0)
+      @result = @connection.execute("set cursor_tuple_fraction to #{frac}")
     end
   end
 end
