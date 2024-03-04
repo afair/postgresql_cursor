@@ -88,6 +88,17 @@ Product.each_row.map {|r| r["id"].to_i } #=> [1, 2, 3, ...]
 Product.each_instance.map {|r| r.id }.each {|id| p id } #=> [1, 2, 3, ...]
 Product.each_instance.lazy.inject(0) {|sum,r| sum +  r.quantity } #=> 499500
 ```
+
+### PostgreSQLCursor and collection rendering
+       
+You can render cursor collection, using enumeration as collection attribute.
+
+```ruby
+render partial: "some_partial", collection: Product.each_instance
+render partial: "some_partial", collection: Product.each_row
+render partial: "some_partial", collection: Product.each_hash
+```
+
 ### Hashes vs. Instances
 
 The each_row method returns the Hash of strings for speed (as this allows you to process a lot of rows).
