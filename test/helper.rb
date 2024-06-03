@@ -12,7 +12,8 @@ ActiveRecord::Base.establish_connection(adapter: 'postgresql',
 class Product < ActiveRecord::Base
   has_many :prices
 
-  # create table records (id serial primary key);
+  # create table products (id serial primary key, data varchar);
+  # create table prices (id serial primary key, product_id integer references products(id));
   def self.generate(max=1_000)
     max.times do |i|
       connection.execute("insert into products values (#{i+1})")
