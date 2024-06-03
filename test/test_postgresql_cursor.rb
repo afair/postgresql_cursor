@@ -225,4 +225,13 @@ class TestPostgresqlCursor < Minitest::Test
     cursor = Product.first.prices.each_instance
     refute cursor.instance_variable_get(:@type).loaded?
   end
+
+  def test_size
+    r = Product.each_instance
+    assert_equal -1, r.size
+    r = Product.each_hash
+    assert_equal -1, r.size
+    r = Product.each_row
+    assert_equal -1, r.size
+  end
 end

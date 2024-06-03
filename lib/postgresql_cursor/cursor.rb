@@ -71,6 +71,12 @@ module PostgreSQLCursor
       self
     end
 
+    # ActiveRecord call #size when rendering a collection
+    # Define it and return some dummy value
+    def size
+      -1
+    end
+
     # Public: Yields each row of the result set to the passed block
     #
     # Yields the row to the block. The row is a hash with symbolized keys.
